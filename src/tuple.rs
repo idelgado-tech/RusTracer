@@ -1,4 +1,7 @@
+use std::f64::consts::*;
 use std::ops::Add;
+use std::ops::Div;
+use std::ops::Mul;
 use std::ops::Sub;
 
 #[derive(PartialEq, Debug)]
@@ -72,6 +75,17 @@ impl Tuple {
             },
         }
     }
+
+    fn negate(self) -> Tuple {
+        Tuple::new_tuple(0.0, 0.0, 0.0, 0) - self
+    }
+
+    fn magnitude(self) -> f64 {
+        if self.w == W::POINT {
+            panic!("magnitude is only for vectors")
+        }
+        (self.x.powi(2) + self.y.powi(2) + self.z.powi(2)).sqrt()
+    }
 }
 
 impl Add for Tuple {
@@ -96,6 +110,32 @@ impl Sub for Tuple {
             y: self.y - other.y,
             z: self.z - other.z,
             w: self.w - other.w,
+        }
+    }
+}
+
+impl Mul<f64> for Tuple {
+    type Output = Tuple;
+
+    fn mul(self, scalar: f64) -> Tuple {
+        Tuple {
+            x: self.x * scalar,
+            y: self.y * scalar,
+            z: self.z * scalar,
+            w: self.w,
+        }
+    }
+}
+
+impl Div<f64> for Tuple {
+    type Output = Tuple;
+
+    fn div(self, scalar: f64) -> Tuple {
+        Tuple {
+            x: self.x / scalar,
+            y: self.y / scalar,
+            z: self.z / scalar,
+            w: self.w,
         }
     }
 }
@@ -149,4 +189,79 @@ mod tests {
         assert_eq!(addition, Tuple::new_tuple(1.0, 1.0, 6.0, 1));
     }
 
+    #[test]
+    fn substract_points() {
+        let p1 = Tuple::new_point(3.0, 2.0, 1.0);
+        let p2 = Tuple::new_point(5.0, 6.0, 7.0);
+        let addition = p1 - p2;
+        assert_eq!(addition, Tuple::new_vector(-2.0, -4.0, -6.0));
+    }
+
+    #[test]
+    fn substract_vector_from_points() {
+        let p = Tuple::new_point(3.0, 2.0, 1.0);
+        let v = Tuple::new_vector(5.0, 6.0, 7.0);
+        let addition = p - v;
+        assert_eq!(addition, Tuple::new_point(-2.0, -4.0, -6.0));
+    }
+
+    #[test]
+    fn substract_vectors() {
+        let v1 = Tuple::new_vector(3.0, 2.0, 1.0);
+        let v2 = Tuple::new_vector(5.0, 6.0, 7.0);
+        let addition = v1 - v2;
+        assert_eq!(addition, Tuple::new_vector(-2.0, -4.0, -6.0));
+    }
+
+    #[test]
+    fn substract_zero_vectors() {
+        let zero = Tuple::new_vector(0.0, 0.0, 0.0);
+        let v = Tuple::new_vector(1.0, -2.0, 3.0);
+        let addition = zero - v;
+        assert_eq!(addition, Tuple::new_vector(-1.0, 2.0, -3.0));
+    }
+
+    #[test]
+    fn negate_tuple() {
+        let tuple = Tuple::new_tuple(1.0, -2.0, 3.0, 0);
+        assert_eq!(tuple.negate(), Tuple::new_tuple(-1.0, 2.0, -3.0, 0));
+    }
+
+    #[test]
+    fn multiplying_a_tuple_by_a_scalar() {
+        let p = Tuple::new_point(3.0, 2.0, 1.0);
+        let v = Tuple::new_vector(5.0, 6.0, 7.0);
+        assert_eq!(p * 3.0, Tuple::new_point(9.0, 6.0, 3.0));
+        assert_eq!(v * 2.0, Tuple::new_vector(10.0, 12.0, 14.0));
+    }
+
+    #[test]
+    fn multiplying_a_tuple_by_a_fraction() {
+        let p = Tuple::new_point(1.0, -2.0, 3.0);
+        assert_eq!(p * 0.5, Tuple::new_point(0.5, -1.0, 1.5));
+    }
+
+    #[test]
+    fn divise_a_tuple_by_a_scalar() {
+        let p = Tuple::new_point(1.0, -2.0, 3.0);
+        assert_eq!(p / 2.0, Tuple::new_point(0.5, -1.0, 1.5));
+    }
+
+    #[test]
+    fn computing() {
+        let v = Tuple::new_vector(1.0, 0.0, 0.0);
+        assert_eq!(v.magnitude(), 1.0);
+
+        let v1 = Tuple::new_vector(0.0, 0.0, 1.0);
+        assert_eq!(v1.magnitude(), 1.0);
+
+        let v2 = Tuple::new_vector(0.0, 1.0, 0.0);
+        assert_eq!(v2.magnitude(), 1.0);
+
+        let v2 = Tuple::new_vector(1.0, 2.0, 3.0);
+        assert_eq!(v2.magnitude(), 14f64.sqrt());
+
+        let v2 = Tuple::new_vector(-1.0, -2.0, -3.0);
+        assert_eq!(v2.magnitude(), 14f64.sqrt());
+    }
 }
