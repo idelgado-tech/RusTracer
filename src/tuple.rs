@@ -4,7 +4,7 @@ use std::ops::Div;
 use std::ops::Mul;
 use std::ops::Sub;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 enum W {
     POINT,
     VECTOR,
@@ -36,7 +36,7 @@ impl Sub for W {
     }
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 struct Tuple {
     x: f64,
     y: f64,
@@ -77,14 +77,45 @@ impl Tuple {
     }
 
     fn negate(self) -> Tuple {
-        Tuple::new_tuple(0.0, 0.0, 0.0, 0) - self
+        let zero = Tuple::new_tuple(0.0, 0.0, 0.0, 0);
+        zero - self
     }
 
-    fn magnitude(self) -> f64 {
+    fn magnitude(&self) -> f64 {
         if self.w == W::POINT {
             panic!("magnitude is only for vectors")
         }
         (self.x.powi(2) + self.y.powi(2) + self.z.powi(2)).sqrt()
+    }
+
+    fn is_unit(&self) -> bool {
+        self.magnitude() == 1.0
+    }
+
+    fn normalize(self) -> Tuple {
+        if self.w == W::POINT {
+            panic!("normalisation is only for vectors")
+        }
+        let magnitude = self.magnitude();
+        self / magnitude
+    }
+
+    fn dot_product(a: Tuple, b: Tuple) -> f64 {
+        if (a.w == W::POINT) || (b.w == W::POINT) {
+            panic!("dot product is only for vectors")
+        }
+        a.x * b.x + a.y * b.y + a.z * b.z
+    }
+
+    fn cross_product(a: Tuple, b: Tuple) -> Tuple {
+        if (a.w == W::POINT) || (b.w == W::POINT) {
+            panic!("cross product is only for vectors")
+        }
+        Tuple::new_vector(
+            a.y * b.z - a.z * b.y,
+            a.z * b.x - a.x * b.z,
+            a.x * b.y - a.y * b.x,
+        )
     }
 }
 
@@ -248,20 +279,35 @@ mod tests {
     }
 
     #[test]
-    fn computing() {
+    fn computing_magnitude() {
         let v = Tuple::new_vector(1.0, 0.0, 0.0);
         assert_eq!(v.magnitude(), 1.0);
+        assert_eq!(v.is_unit(), true);
 
         let v1 = Tuple::new_vector(0.0, 0.0, 1.0);
         assert_eq!(v1.magnitude(), 1.0);
+        assert_eq!(v1.is_unit(), true);
 
         let v2 = Tuple::new_vector(0.0, 1.0, 0.0);
         assert_eq!(v2.magnitude(), 1.0);
+        assert_eq!(v2.is_unit(), true);
 
-        let v2 = Tuple::new_vector(1.0, 2.0, 3.0);
-        assert_eq!(v2.magnitude(), 14f64.sqrt());
+        let v3 = Tuple::new_vector(1.0, 2.0, 3.0);
+        assert_eq!(v3.magnitude(), 14f64.sqrt());
 
-        let v2 = Tuple::new_vector(-1.0, -2.0, -3.0);
-        assert_eq!(v2.magnitude(), 14f64.sqrt());
+        let v4 = Tuple::new_vector(-1.0, -2.0, -3.0);
+        assert_eq!(v4.magnitude(), 14f64.sqrt());
+    }
+
+    #[test]
+    fn nomalizing_vector() {
+        let v = Tuple::new_vector(4.0, 0.0, 0.0);
+        assert_eq!(v.magnitude(), 4.0);
+        assert_eq!(true, v.normalize().is_unit());
+
+        let v3 = Tuple::new_vector(1.0, 2.0, 3.0);
+        assert_eq!(v3.magnitude(), 14f64.sqrt());
+        let normalized_v3 = v3.normalize();
+        assert_eq!(true, normalized_v3.is_unit());
     }
 }
