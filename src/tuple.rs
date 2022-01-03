@@ -4,6 +4,8 @@ use std::ops::Div;
 use std::ops::Mul;
 use std::ops::Sub;
 
+use crate::utils::*;
+
 #[derive(PartialEq, Debug, Clone)]
 enum W {
     POINT,
@@ -100,14 +102,14 @@ impl Tuple {
         self / magnitude
     }
 
-    fn dot_product(a: Tuple, b: Tuple) -> f64 {
+    fn dot_product(a: &Tuple, b: &Tuple) -> f64 {
         if (a.w == W::POINT) || (b.w == W::POINT) {
             panic!("dot product is only for vectors")
         }
         a.x * b.x + a.y * b.y + a.z * b.z
     }
 
-    fn cross_product(a: Tuple, b: Tuple) -> Tuple {
+    fn cross_product(a: &Tuple, b: &Tuple) -> Tuple {
         if (a.w == W::POINT) || (b.w == W::POINT) {
             panic!("cross product is only for vectors")
         }
@@ -171,12 +173,8 @@ impl Div<f64> for Tuple {
     }
 }
 
-fn compare_float(value1: f64, value2: f64) -> bool {
-    (value1 - value2).abs() < f64::EPSILON
-}
-
 #[cfg(test)]
-mod tests {
+mod tuple_tests {
     use super::*;
 
     #[test]
@@ -309,5 +307,24 @@ mod tests {
         assert_eq!(v3.magnitude(), 14f64.sqrt());
         let normalized_v3 = v3.normalize();
         assert_eq!(true, normalized_v3.is_unit());
+    }
+
+    #[test]
+    fn cross_product() {
+        let a = Tuple::new_vector(1.0, 2.0, 3.0);
+        let b = Tuple::new_vector(2.0, 3.0, 4.0);
+        let cross_ab = Tuple::new_vector(-1.0, 2.0, -1.0);
+        assert_eq!(Tuple::cross_product(&a, &b), cross_ab);
+
+        let cross_ba = Tuple::new_vector(1.0, -2.0, 1.0);
+        assert_eq!(Tuple::cross_product(&b, &a), cross_ba);
+    }
+
+    #[test]
+    fn dot_product() {
+        let a = Tuple::new_vector(1.0, 2.0, 3.0);
+        let b = Tuple::new_vector(2.0, 3.0, 4.0);
+        let dot_ab = 20.0;
+        assert_eq!(Tuple::dot_product(&a, &b), dot_ab);
     }
 }
