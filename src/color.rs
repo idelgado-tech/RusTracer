@@ -1,10 +1,9 @@
 use crate::utils::*;
 use std::ops::Add;
-use std::ops::Div;
 use std::ops::Mul;
 use std::ops::Sub;
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct Color {
     red: f64,
     green: f64,
@@ -25,12 +24,13 @@ impl Color {
     }
 }
 
-const AZURE_BLUE: Color = Color {
+pub const AZURE_BLUE: Color = Color {
     red: 0.0,
     green: 0.5,
     blue: 1.0,
 };
-const LIGHT_VIOLET: Color = Color {
+
+pub const LIGHT_VIOLET: Color = Color {
     red: 0.5,
     green: 0.5,
     blue: 1.0,
@@ -84,6 +84,14 @@ impl Mul<Color> for Color {
     }
 }
 
+impl PartialEq for Color {
+    fn eq(&self, other: &Self) -> bool {
+        compare_float(self.green, other.green)
+            && compare_float(self.blue, other.blue)
+            && compare_float(self.red, other.red)
+    }
+}
+
 #[cfg(test)]
 mod color_tests {
     use super::*;
@@ -100,23 +108,31 @@ mod color_tests {
         assert!(compare_float(color_2.green, 0.4));
         assert!(compare_float(color_2.blue, 1.7));
     }
+
+    #[test]
+    fn color_addition() {
+        let color = Color::new_color(0.9, 0.6, 0.75);
+        let color_2 = Color::new_color(0.7, 0.1, 0.25);
+        assert_eq!(color + color_2, Color::new_color(1.6, 0.7, 1.0));
+    }
+
+    #[test]
+    fn color_substraction() {
+        let color = Color::new_color(0.9, 0.6, 0.75);
+        let color_2 = Color::new_color(0.7, 0.1, 0.25);
+        assert_eq!(color - color_2, Color::new_color(0.2, 0.5, 0.5));
+    }
+
+    #[test]
+    fn color_mult_by_a_scalar() {
+        let color = Color::new_color(0.2, 0.3, 0.4);
+        assert_eq!(color * 2.0, Color::new_color(0.4, 0.6, 0.8));
+    }
+
+    #[test]
+    fn color_multiplication() {
+        let color = Color::new_color(1.0, 0.2, 0.4);
+        let color_2 = Color::new_color(0.9, 1.0, 0.1);
+        assert_eq!(color * color_2, Color::new_color(0.9, 0.2, 0.04));
+    }
 }
-
-// ​Scenario​: Adding colors
-// ​ 	  ​Given​ c1 ← color(0.9, 0.6, 0.75)
-// ​ 	    ​And​ c2 ← color(0.7, 0.1, 0.25)
-// ​ 	   ​Then​ c1 + c2 = color(1.6, 0.7, 1.0)
-// ​
-// ​ 	​Scenario​: Subtracting colors
-// ​ 	  ​Given​ c1 ← color(0.9, 0.6, 0.75)
-// ​ 	    ​And​ c2 ← color(0.7, 0.1, 0.25)
-// ​ 	   ​Then​ c1 - c2 = color(0.2, 0.5, 0.5)
-// ​
-// ​ 	​Scenario​: Multiplying a color by a scalar
-// ​ 	  ​Given​ c ← color(0.2, 0.3, 0.4)
-// ​ 	  ​Then​ c * 2 = color(0.4, 0.6, 0.8)
-
-// ​Scenario​: Multiplying colors
-// ​ 	  ​Given​ c1 ← color(1, 0.2, 0.4)
-// ​ 	    ​And​ c2 ← color(0.9, 1, 0.1)
-// ​ 	   ​Then​ c1 * c2 = color(0.9, 0.2, 0.04)

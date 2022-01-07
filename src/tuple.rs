@@ -38,16 +38,16 @@ impl Sub for W {
     }
 }
 
-#[derive(PartialEq, Debug, Clone)]
-struct Tuple {
-    x: f64,
-    y: f64,
-    z: f64,
+#[derive(Debug, Clone)]
+pub struct Tuple {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
     w: W,
 }
 
 impl Tuple {
-    fn new_point(x: f64, y: f64, z: f64) -> Tuple {
+    pub fn new_point(x: f64, y: f64, z: f64) -> Tuple {
         Tuple {
             x,
             y,
@@ -56,7 +56,7 @@ impl Tuple {
         }
     }
 
-    fn new_vector(x: f64, y: f64, z: f64) -> Tuple {
+    pub fn new_vector(x: f64, y: f64, z: f64) -> Tuple {
         Tuple {
             x,
             y,
@@ -118,6 +118,15 @@ impl Tuple {
             a.z * b.x - a.x * b.z,
             a.x * b.y - a.y * b.x,
         )
+    }
+}
+
+impl PartialEq for Tuple {
+    fn eq(&self, other: &Self) -> bool {
+        compare_float(self.x, other.x)
+            && compare_float(self.y, other.y)
+            && compare_float(self.z, other.z)
+            && self.w == other.w
     }
 }
 
