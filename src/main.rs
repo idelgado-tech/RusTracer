@@ -4,6 +4,7 @@ mod minifb_als;
 mod ppm;
 mod tuple;
 mod utils;
+mod matrix;
 
 use minifb::{Key, Window, WindowOptions};
 
