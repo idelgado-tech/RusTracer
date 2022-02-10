@@ -1,9 +1,7 @@
-use crate::utils::*;
 use crate::tuple::*;
+use crate::utils::*;
 
-use std::ops::Add;
 use std::ops::Mul;
-use std::ops::Sub;
 
 ///Represent a square matrix
 #[derive(Debug, Clone)]
@@ -53,13 +51,17 @@ impl Mul<Tuple> for Matrix {
 
     fn mul(self, other: Tuple) -> Tuple {
         let mut tuple = Tuple::new_point(0.0, 0.0, 0.0);
+
         //TODO
-        return tuple
+        return tuple;
     }
 }
 
 impl Matrix {
     pub fn new_matrix(size: usize) -> Matrix {
+        if size < 1 || size > 4{
+          panic!("Matrix size can only be 2; 3 or 4")  
+        }
         Matrix {
             size: size,
             matrix: vec![0.0; size * size],
@@ -175,5 +177,21 @@ mod matrix_tests {
         let m_result = Matrix::new_matrix_with_data(4, data_vector_result);
 
         assert_eq!(ma * mb, m_result);
+    }
+
+    #[test]
+    /// Multiplying a matrix by the identity matrix
+    fn matrix_multiplication_by_identity() {
+        let data_vector_a = vec![
+            1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0,
+        ];
+        let ma = Matrix::new_matrix_with_data(4, data_vector_a);
+        let data_vector_identity = vec![
+            1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+        ];
+        let mb = Matrix::new_matrix_with_data(4, data_vector_identity);
+
+        let result = ma.clone();
+        assert_eq!(ma * mb, result);
     }
 }
