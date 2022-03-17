@@ -50,17 +50,31 @@ impl Mul<Tuple> for Matrix {
     type Output = Tuple;
 
     fn mul(self, other: Tuple) -> Tuple {
-        let mut tuple = Tuple::new_point(0.0, 0.0, 0.0);
+        let other_as_vec = vec![other.x, other.y, other.z, W::to_int(other.w) as f64];
+        let mut tuple_tmp = vec![0.0, 0.0, 0.0, 0.0];
 
-        //TODO
-        return tuple;
+        for row in 0..self.size {
+            let mut val = 0.0;
+            for col in 0..self.size {
+                val += self.element(row, col) * other_as_vec[col];
+            }
+
+            tuple_tmp[row] = val;
+        }
+
+        return Tuple::new_tuple(
+            tuple_tmp[0],
+            tuple_tmp[1],
+            tuple_tmp[2],
+            tuple_tmp[3] as i64,
+        );
     }
 }
 
 impl Matrix {
     pub fn new_matrix(size: usize) -> Matrix {
-        if size < 1 || size > 4{
-          panic!("Matrix size can only be 2; 3 or 4")  
+        if size < 1 || size > 4 {
+            panic!("Matrix size can only be 2; 3 or 4")
         }
         Matrix {
             size: size,
@@ -194,4 +208,27 @@ mod matrix_tests {
         let result = ma.clone();
         assert_eq!(ma * mb, result);
     }
+
+    #[test]
+    /// Multiplying a matrix by a tuple
+    fn matrix_multiplication_by_tuple() {
+        let data_vector_a = vec![
+            1.0, 2.0, 3.0, 4.0, 2.0, 4.0, 4.0, 2.0, 8.0, 6.0, 4.0, 1.0, 0.0, 0.0, 0.0, 1.0,
+        ];
+        let ma = Matrix::new_matrix_with_data(4, data_vector_a);
+
+        let tuple = Tuple::new_point(1.0, 2.0, 3.0);
+        let tuple_res = Tuple::new_point(18.0, 24.0, 33.0);
+
+        assert_eq!(ma * tuple, tuple_res);
+    }
+
+    //     ​ 	​Scenario​: A matrix multiplied by a tuple
+    // ​ 	  ​Given​ the following matrix A:
+    // ​ 	      | 1 | 2 | 3 | 4 |
+    // ​ 	      | 2 | 4 | 4 | 2 |
+    // ​ 	      | 8 | 6 | 4 | 1 |
+    // ​ 	      | 0 | 0 | 0 | 1 |
+    // ​ 	    ​And​ b ← tuple(1, 2, 3, 1)
+    // ​ 	  ​Then​ A * b = tuple(18, 24, 33, 1)
 }

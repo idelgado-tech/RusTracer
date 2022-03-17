@@ -7,7 +7,7 @@ use std::ops::Sub;
 use crate::utils::*;
 
 #[derive(PartialEq, Debug, Clone)]
-enum W {
+pub enum W {
     POINT,
     VECTOR,
 }
@@ -38,12 +38,30 @@ impl Sub for W {
     }
 }
 
+impl W {
+    pub fn from_int(float: isize) -> W {
+        match float {
+            0 => W::VECTOR,
+            1 => W::POINT,
+            _ => panic!("Tuple must be point OR vector, input w value : {}", float),
+        }
+    }
+
+   pub fn to_int(w: W) -> isize {
+        match w {
+            W::VECTOR => 0,
+            W::POINT => 1,
+            _ => panic!("Tuple must be point OR vector, input w value : {:?}", w),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Tuple {
     pub x: f64,
     pub y: f64,
     pub z: f64,
-    w: W,
+   pub w: W,
 }
 
 impl Tuple {
@@ -65,7 +83,7 @@ impl Tuple {
         }
     }
 
-    fn new_tuple(x: f64, y: f64, z: f64, w: i64) -> Tuple {
+   pub fn new_tuple(x: f64, y: f64, z: f64, w: i64) -> Tuple {
         Tuple {
             x,
             y,
