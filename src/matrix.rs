@@ -96,6 +96,40 @@ impl Matrix {
     pub fn set_element(&mut self, row: usize, column: usize, value: f64) -> () {
         self.matrix[(row * self.size) + column] = value;
     }
+
+    pub fn transpose(&self) -> Matrix {
+        let mut matrix = Matrix::new_matrix(self.size);
+
+        for row in 0..self.size {
+            for col in 0..self.size {
+                matrix.set_element(row, col, self.element(col, row));
+            }
+        }
+        return matrix;
+    }
+
+    pub fn determinant(&self) -> f64 {
+        if self.size == 2 {
+            return self.element(0, 0) * self.element(1, 1)
+                - self.element(1, 0) * self.element(0, 1);
+        }
+        0.0
+    }
+
+    pub fn sub_matix(&self, row: usize, col: usize) -> Matrix {
+        let mut data_vec = vec![];
+
+        for irow in 0..self.size {
+            for icol in 0..self.size {
+                if row != irow && col != icol {
+                    data_vec.push(self.element(irow, icol));
+                }
+            }
+        }
+        let matrix = Matrix::new_matrix_with_data(self.size - 1, data_vec);
+
+        return matrix;
+    }
 }
 
 #[cfg(test)]
@@ -223,12 +257,55 @@ mod matrix_tests {
         assert_eq!(ma * tuple, tuple_res);
     }
 
-    //     ​ 	​Scenario​: A matrix multiplied by a tuple
-    // ​ 	  ​Given​ the following matrix A:
-    // ​ 	      | 1 | 2 | 3 | 4 |
-    // ​ 	      | 2 | 4 | 4 | 2 |
-    // ​ 	      | 8 | 6 | 4 | 1 |
-    // ​ 	      | 0 | 0 | 0 | 1 |
-    // ​ 	    ​And​ b ← tuple(1, 2, 3, 1)
-    // ​ 	  ​Then​ A * b = tuple(18, 24, 33, 1)
+    #[test]
+    /// Multiplying a matrix by a tuple
+    fn matrix_determinant_2x2_matrix() {
+        let data_vector_a = vec![1.0, 5.0, -3.0, 2.0];
+        let ma = Matrix::new_matrix_with_data(2, data_vector_a);
+
+        assert_eq!(ma.determinant(), 17.0);
+    }
+
+    #[test]
+    /// Multiplying a matrix by a tuple
+    fn matrix_transpose() {
+        let data_vector_a = vec![
+            0.0, 9.0, 3.0, 0.0, 9.0, 8.0, 0.0, 8.0, 1.0, 8.0, 5.0, 3.0, 0.0, 0.0, 5.0, 8.0,
+        ];
+        let ma = Matrix::new_matrix_with_data(4, data_vector_a);
+
+        let data_vector_b = vec![
+            0.0, 9.0, 1.0, 0.0, 9.0, 8.0, 8.0, 0.0, 3.0, 0.0, 5.0, 5.0, 0.0, 8.0, 3.0, 8.0,
+        ];
+        let mb = Matrix::new_matrix_with_data(4, data_vector_b);
+
+        assert_eq!(ma.transpose(), mb);
+
+        let data_vector_identity = vec![
+            1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+        ];
+        let m_ident = Matrix::new_matrix_with_data(4, data_vector_identity);
+
+        assert_eq!(m_ident.transpose(), m_ident);
+    }
+
+    #[test]
+    fn matrixsub_matrix() {
+        let data_vector_a = vec![1.0, 5.0, 0.0, -3.0, 2.0, 7.0, 0.0, 6.0, -3.0];
+        let ma = Matrix::new_matrix_with_data(3, data_vector_a);
+
+        let data_vector_b = vec![-3.0, 2.0, 0.0, 6.0];
+        let mb = Matrix::new_matrix_with_data(2, data_vector_b);
+
+        assert_eq!(ma.sub_matix(0, 2), mb);
+
+        let data_vector_c = vec![
+            0.0, 9.0, 3.0, 0.0, 9.0, 8.0, 0.0, 8.0, 1.0, 8.0, 5.0, 3.0, 0.0, 0.0, 5.0, 8.0,
+        ];
+        let mc = Matrix::new_matrix_with_data(4, data_vector_c);
+
+        let data_vector_d = vec![0.0, 3.0, 0.0, 9.0, 0.0, 8.0, 0.0, 5.0, 8.0];
+        let md = Matrix::new_matrix_with_data(3, data_vector_d);
+        assert_eq!(mc.sub_matix(2, 1), md);
+    }
 }
