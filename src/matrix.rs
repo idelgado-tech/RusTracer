@@ -130,6 +130,17 @@ impl Matrix {
 
         return matrix;
     }
+
+    pub fn minor(&self, row: usize, col: usize) -> f64 {
+        let sub_matrix = self.sub_matix(row, col);
+        sub_matrix.determinant()
+    }
+
+    pub fn cofactor(&self, row: usize, col: usize) -> f64 {
+        let minor = self.minor(row, col);
+        let factor = if (row + col) % 2 == 1 { -1.0 } else { 1.0 };
+        minor * factor
+    }
 }
 
 #[cfg(test)]
@@ -290,7 +301,7 @@ mod matrix_tests {
     }
 
     #[test]
-    fn matrixsub_matrix() {
+    fn sub_matrix() {
         let data_vector_a = vec![1.0, 5.0, 0.0, -3.0, 2.0, 7.0, 0.0, 6.0, -3.0];
         let ma = Matrix::new_matrix_with_data(3, data_vector_a);
 
@@ -307,5 +318,14 @@ mod matrix_tests {
         let data_vector_d = vec![0.0, 3.0, 0.0, 9.0, 0.0, 8.0, 0.0, 5.0, 8.0];
         let md = Matrix::new_matrix_with_data(3, data_vector_d);
         assert_eq!(mc.sub_matix(2, 1), md);
+    }
+
+    #[test]
+    fn minor() {
+        let data_vector_a = vec![1.0, 5.0, 0.0, -3.0, 2.0, 7.0, 0.0, 6.0, -3.0];
+        let ma = Matrix::new_matrix_with_data(3, data_vector_a);
+        let mb = ma.sub_matix(1, 0);
+
+        assert_eq!(ma.minor(1, 0), mb.determinant());
     }
 }
