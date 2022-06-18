@@ -2,6 +2,7 @@ mod canvas;
 mod color;
 mod minifb_als;
 mod ppm;
+mod transformation;
 mod tuple;
 mod utils;
 mod matrix;

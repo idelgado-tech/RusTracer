@@ -89,6 +89,22 @@ impl Matrix {
         }
     }
 
+    pub fn new_identity_matrix(size: usize) -> Matrix {
+        if size < 1 || size > 4 {
+            panic!("Matrix size can only be 2; 3 or 4")
+        }
+        let mut matrix = Matrix {
+            size: size,
+            matrix: vec![0.0; size * size],
+        };
+
+        for row in 0..size {
+            matrix.set_element(row, row, 1.0);
+        }
+
+        return matrix;
+    }
+
     pub fn element(&self, row: usize, column: usize) -> f64 {
         self.matrix[(row * self.size) + column]
     }
@@ -146,10 +162,32 @@ impl Matrix {
         let factor = if (row + col) % 2 == 1 { -1.0 } else { 1.0 };
         minor * factor
     }
+
+    pub fn is_invertible(&self) -> bool {
+        self.determinant() != 0.0
+    }
+
+    pub fn inverse(&self) -> Result<Matrix, String> {
+        if !self.is_invertible() {
+            return Err(String::from("Matrix not invertible"));
+        } else {
+            let mut m2 = Matrix::new_matrix(self.size);
+
+            for row in 0..self.size {
+                for col in 0..self.size {
+                    let c = self.cofactor(row, col);
+                    m2.set_element(col, row, c / self.determinant());
+                }
+            }
+            return Ok(m2);
+        }
+    }
 }
 
 #[cfg(test)]
 mod matrix_tests {
+    use crate::utils;
+
     use super::*;
 
     #[test]
@@ -360,7 +398,9 @@ mod matrix_tests {
         assert_eq!(ma.cofactor(0, 2), -46.0);
         assert_eq!(ma.determinant(), -196.0);
 
-        let data_vector_b = vec![-2.0, -8.0, 3.0,5.0 , -3.0, 1.0, 7.0, 3.0, 1.0, 2.0, -9.0, 6.0, -6.0, 7.0, 7.0 ,-9.0];
+        let data_vector_b = vec![
+            -2.0, -8.0, 3.0, 5.0, -3.0, 1.0, 7.0, 3.0, 1.0, 2.0, -9.0, 6.0, -6.0, 7.0, 7.0, -9.0,
+        ];
         let mb = Matrix::new_matrix_with_data(4, data_vector_b);
 
         assert_eq!(mb.cofactor(0, 0), 690.0);
@@ -368,5 +408,57 @@ mod matrix_tests {
         assert_eq!(mb.cofactor(0, 2), 210.0);
         assert_eq!(mb.cofactor(0, 3), 51.0);
         assert_eq!(mb.determinant(), -4071.0);
-        }
+    }
+
+    #[test]
+    ///Testing matrix for invertibility
+    fn is_invertible() {
+        let data_vector_a = vec![
+            -2.0, -8.0, 3.0, 5.0, -3.0, 1.0, 7.0, 3.0, 1.0, 2.0, -9.0, 6.0, -6.0, 7.0, 7.0, -9.0,
+        ];
+        let ma = Matrix::new_matrix_with_data(4, data_vector_a);
+        assert_eq!(ma.determinant(), -4071.0);
+        assert!(ma.is_invertible());
+
+        let data_vector_b = vec![
+            -4.0, 2.0, -2.0, -3.0, 9.0, 6.0, 2.0, 6.0, 0.0, -5.0, 1.0, -5.0, 0.0, 0.0, 0.0, 0.0,
+        ];
+        let mb = Matrix::new_matrix_with_data(4, data_vector_b);
+        assert_eq!(mb.determinant(), 0.0);
+        assert!(!mb.is_invertible());
+    }
+
+    #[test]
+    ///Calculating the inverse of a matrix
+    fn inversion() {
+        let data_vector_a = vec![
+            -5.0, 2.0, 6.0, -8.0, 1.0, -5.0, 1.0, 8.0, 7.0, 7.0, -6.0, -7.0, 1.0, -3.0, 7.0, 4.0,
+        ];
+        let ma = Matrix::new_matrix_with_data(4, data_vector_a);
+        let mb = ma.inverse().unwrap();
+
+        assert_eq!(ma.determinant(), 532.0);
+        assert!(ma.is_invertible());
+
+        let data_vector_b_test = vec![
+            0.21804511278195488,
+            0.45112781954887216,
+            0.24060150375939848,
+            -0.045112781954887216,
+            -0.8082706766917294,
+            -1.4567669172932332,
+            -0.44360902255639095,
+            0.5206766917293233,
+            -0.07894736842105263,
+            -0.2236842105263158,
+            -0.05263157894736842,
+            0.19736842105263158,
+            -0.5225563909774437,
+            -0.8139097744360902,
+            -0.3007518796992481,
+            0.30639097744360905,
+        ];
+        let mb_test = Matrix::new_matrix_with_data(4, data_vector_b_test);
+        assert_eq!(mb, mb_test);
+    }
 }
