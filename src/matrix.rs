@@ -1,3 +1,5 @@
+use crate::error;
+use crate::error::ErrorKind;
 use crate::tuple::*;
 use crate::utils::*;
 
@@ -17,7 +19,6 @@ impl PartialEq for Matrix {
         } else {
             for m_tuple in self.matrix.iter().zip(other.matrix.iter()) {
                 let (am, bm) = m_tuple;
-
                 if !compare_float(*am, *bm) {
                     return false;
                 }
@@ -167,9 +168,9 @@ impl Matrix {
         self.determinant() != 0.0
     }
 
-    pub fn inverse(&self) -> Result<Matrix, String> {
+    pub fn inverse(&self) -> Result<Matrix, error::TracerError> {
         if !self.is_invertible() {
-            return Err(String::from("Matrix not invertible"));
+            return Err(error::TracerError::new_simple(ErrorKind::NotInversible));
         } else {
             let mut m2 = Matrix::new_matrix(self.size);
 

@@ -6,6 +6,7 @@ mod transformation;
 mod tuple;
 mod utils;
 mod matrix;
+mod error;
 
 use minifb::{Key, Window, WindowOptions};
 
