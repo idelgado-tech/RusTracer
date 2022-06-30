@@ -1,9 +1,13 @@
 [package]
 name = "rustracer"
-version = "0.2.0"
+version = "0.4.0"
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+# on ubuntu linux we may need to point the path of xkbcommon.pc to pkgconfig
+# $ PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig cargo build 
+# TODO do a build.rs file
+
 
 [dependencies]
 minifb = "0.20"

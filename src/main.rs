@@ -28,7 +28,7 @@ pub struct Proj {
 fn tick(env: &Env, proj: &Proj) -> Proj {
     let position = proj.position.clone() + proj.velocity.clone();
     let velocity = proj.velocity.clone() + env.gravity.clone() + env.wind.clone();
-    return Proj { position, velocity };
+    Proj { position, velocity }
 }
 
 fn main() {
@@ -44,7 +44,7 @@ fn main() {
     };
 
     let mut position_vec: Vec<Tuple> = Vec::with_capacity(100);
-    position_vec.push(position.clone());
+    position_vec.push(position);
 
     while position_vec.last().unwrap().y > 0.0 {
         println!("Here loop = {:?} ", position_vec.len());

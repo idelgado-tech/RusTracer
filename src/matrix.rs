@@ -86,7 +86,7 @@ impl Matrix {
     pub fn new_matrix_with_data(size: usize, data: Vec<f64>) -> Matrix {
         Matrix {
             size: size,
-            matrix: data.clone(),
+            matrix: data,
         }
     }
 
@@ -95,7 +95,7 @@ impl Matrix {
             panic!("Matrix size can only be 2; 3 or 4")
         }
         let mut matrix = Matrix {
-            size: size,
+            size,
             matrix: vec![0.0; size * size],
         };
 

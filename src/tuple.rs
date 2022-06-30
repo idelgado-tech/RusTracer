@@ -109,7 +109,7 @@ impl Tuple {
     }
 
     fn is_unit(&self) -> bool {
-        self.magnitude() == 1.0
+        (self.magnitude() - 1.0).abs() < 0.0001
     }
 
     fn normalize(self) -> Tuple {
