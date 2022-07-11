@@ -1,5 +1,6 @@
 use std::f64::consts::*;
 use std::ops::Add;
+use std::ops::Deref;
 use std::ops::Div;
 use std::ops::Mul;
 use std::ops::Sub;
@@ -47,7 +48,7 @@ impl W {
         }
     }
 
-   pub fn to_int(w: W) -> isize {
+    pub fn to_int(w: W) -> isize {
         match w {
             W::VECTOR => 0,
             W::POINT => 1,
@@ -61,7 +62,7 @@ pub struct Tuple {
     pub x: f64,
     pub y: f64,
     pub z: f64,
-   pub w: W,
+    pub w: W,
 }
 
 impl Tuple {
@@ -83,7 +84,7 @@ impl Tuple {
         }
     }
 
-   pub fn new_tuple(x: f64, y: f64, z: f64, w: i64) -> Tuple {
+    pub fn new_tuple(x: f64, y: f64, z: f64, w: i64) -> Tuple {
         Tuple {
             x,
             y,
@@ -96,23 +97,23 @@ impl Tuple {
         }
     }
 
-    fn negate(self) -> Tuple {
+    pub fn negate(self) -> Tuple {
         let zero = Tuple::new_tuple(0.0, 0.0, 0.0, 0);
         zero - self
     }
 
-    fn magnitude(&self) -> f64 {
+    pub fn magnitude(&self) -> f64 {
         if self.w == W::POINT {
             panic!("magnitude is only for vectors")
         }
         (self.x.powi(2) + self.y.powi(2) + self.z.powi(2)).sqrt()
     }
 
-    fn is_unit(&self) -> bool {
+    pub fn is_unit(&self) -> bool {
         (self.magnitude() - 1.0).abs() < 0.0001
     }
 
-    fn normalize(self) -> Tuple {
+    pub fn normalize(self) -> Tuple {
         if self.w == W::POINT {
             panic!("normalisation is only for vectors")
         }
@@ -120,14 +121,14 @@ impl Tuple {
         self / magnitude
     }
 
-    fn dot_product(a: &Tuple, b: &Tuple) -> f64 {
+    pub fn dot_product(a: &Tuple, b: &Tuple) -> f64 {
         if (a.w == W::POINT) || (b.w == W::POINT) {
             panic!("dot product is only for vectors")
         }
         a.x * b.x + a.y * b.y + a.z * b.z
     }
 
-    fn cross_product(a: &Tuple, b: &Tuple) -> Tuple {
+    pub fn cross_product(a: &Tuple, b: &Tuple) -> Tuple {
         if (a.w == W::POINT) || (b.w == W::POINT) {
             panic!("cross product is only for vectors")
         }
@@ -138,6 +139,14 @@ impl Tuple {
         )
     }
 }
+
+// impl Deref for Tuple {
+//     type Target = Tuple;
+
+//     fn deref(&self) -> &Tuple {
+//         self
+//     }
+// }
 
 impl PartialEq for Tuple {
     fn eq(&self, other: &Self) -> bool {

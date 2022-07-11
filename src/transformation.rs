@@ -1,7 +1,7 @@
 use crate::matrix::Matrix;
 use crate::tuple::Tuple;
 
-fn create_translation(x: f64, y: f64, z: f64) -> Matrix {
+pub fn create_translation(x: f64, y: f64, z: f64) -> Matrix {
     let mut m = Matrix::new_identity_matrix(4);
     m.set_element(0, 3, x);
     m.set_element(1, 3, y);
@@ -9,7 +9,7 @@ fn create_translation(x: f64, y: f64, z: f64) -> Matrix {
     m
 }
 
-fn create_scaling(x: f64, y: f64, z: f64) -> Matrix {
+pub fn create_scaling(x: f64, y: f64, z: f64) -> Matrix {
     let mut m = Matrix::new_identity_matrix(4);
     m.set_element(0, 0, x);
     m.set_element(1, 1, y);
@@ -17,7 +17,7 @@ fn create_scaling(x: f64, y: f64, z: f64) -> Matrix {
     m
 }
 
-fn create_rotation_x(radians: f64) -> Matrix {
+pub fn create_rotation_x(radians: f64) -> Matrix {
     let mut m = Matrix::new_identity_matrix(4);
     m.set_element(1, 1, radians.cos());
     m.set_element(1, 2, -radians.sin());
@@ -26,7 +26,7 @@ fn create_rotation_x(radians: f64) -> Matrix {
     m
 }
 
-fn create_rotation_y(radians: f64) -> Matrix {
+pub fn create_rotation_y(radians: f64) -> Matrix {
     let mut m = Matrix::new_identity_matrix(4);
     m.set_element(0, 0, radians.cos());
     m.set_element(0, 2, radians.sin());
@@ -35,7 +35,7 @@ fn create_rotation_y(radians: f64) -> Matrix {
     m
 }
 
-fn create_rotation_z(radians: f64) -> Matrix {
+pub fn create_rotation_z(radians: f64) -> Matrix {
     let mut m = Matrix::new_identity_matrix(4);
     m.set_element(0, 0, radians.cos());
     m.set_element(0, 1, -radians.sin());
@@ -44,7 +44,7 @@ fn create_rotation_z(radians: f64) -> Matrix {
     m
 }
 
-fn create_shearing(x_y: f64, x_z: f64, y_x: f64, y_z: f64, z_x: f64, z_y: f64) -> Matrix {
+pub fn create_shearing(x_y: f64, x_z: f64, y_x: f64, y_z: f64, z_x: f64, z_y: f64) -> Matrix {
     let mut m = Matrix::new_identity_matrix(4);
     m.set_element(0, 1, x_y);
     m.set_element(0, 2, x_z);
@@ -56,32 +56,32 @@ fn create_shearing(x_y: f64, x_z: f64, y_x: f64, y_z: f64, z_x: f64, z_y: f64) -
 }
 
 impl Matrix {
-    fn translation(self, x: f64, y: f64, z: f64) -> Matrix {
+    pub fn translation(self, x: f64, y: f64, z: f64) -> Matrix {
         let translation = create_translation(x, y, z);
         translation * self
     }
 
-    fn scaling(self, x: f64, y: f64, z: f64) -> Matrix {
+    pub fn scaling(self, x: f64, y: f64, z: f64) -> Matrix {
         let scaling = create_scaling(x, y, z);
         scaling * self
     }
 
-    fn rotation_x(self, radians: f64) -> Matrix {
+    pub fn rotation_x(self, radians: f64) -> Matrix {
         let rotation_x = create_rotation_x(radians);
         rotation_x * self
     }
 
-    fn rotation_y(self, radians: f64) -> Matrix {
+    pub fn rotation_y(self, radians: f64) -> Matrix {
         let rotation_y = create_rotation_y(radians);
         rotation_y * self
     }
 
-    fn rotation_z(self, radians: f64) -> Matrix {
+    pub fn rotation_z(self, radians: f64) -> Matrix {
         let rotation_z = create_rotation_z(radians);
         rotation_z * self
     }
 
-    fn shearing(x_y: f64, x_z: f64, y_x: f64, y_z: f64, z_x: f64, z_y: f64) -> Matrix {
+    pub fn shearing(x_y: f64, x_z: f64, y_x: f64, y_z: f64, z_x: f64, z_y: f64) -> Matrix {
         let mut m = Matrix::new_identity_matrix(4);
         m.set_element(0, 1, x_y);
         m.set_element(0, 2, x_z);
@@ -261,17 +261,17 @@ mod transformation_tests {
     ///A shearing transformation moves z in proportion to y
     fn individual_tranformations() {
         let point = Tuple::new_point(1.0, 0.0, 1.0);
-        let A = create_rotation_x(PI / 2.0);
-        let B = create_scaling(5.0, 5.0, 5.0);
-        let C = create_translation(10.0, 5.0, 7.0);
+        let a = create_rotation_x(PI / 2.0);
+        let b = create_scaling(5.0, 5.0, 5.0);
+        let c = create_translation(10.0, 5.0, 7.0);
         // apply rotation first
-        let point2 = A * point;
+        let point2 = a * point;
         assert_eq!(point2, Tuple::new_point(1.0, -1.0, 0.0));
         // then apply scaling​
-        let point3 = B * point2;
+        let point3 = b * point2;
         assert_eq!(point3, Tuple::new_point(5.0, -5.0, 0.0));
         // then apply translation​
-        let point4 = C * point3;
+        let point4 = c * point3;
         assert_eq!(point4, Tuple::new_point(15.0, 0.0, 7.0));
     }
 
@@ -301,11 +301,5 @@ mod transformation_tests {
         assert_eq!(point2, Tuple::new_point(15.0, 0.0, 7.0));
     }
 
-    // ​Scenario​: Chained transformations must be applied in reverse order
-    // ​ 	  ​Given​ p ← point(1, 0, 1)
-    // ​ 	    ​And​ A ← rotation_x(π / 2)
-    // ​ 	    ​And​ B ← scaling(5, 5, 5)
-    // ​ 	    ​And​ C ← translation(10, 5, 7)
-    // ​ 	  ​When​ T ← C * B * A
-    // ​ 	  ​Then​ T * p = point(15, 0, 7)
+
 }

@@ -7,6 +7,7 @@ mod tuple;
 mod utils;
 mod matrix;
 mod error;
+mod ray;
 
 use minifb::{Key, Window, WindowOptions};
 
