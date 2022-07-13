@@ -43,7 +43,7 @@ impl Mul for Matrix {
                 matrix.set_element(row, col, val);
             }
         }
-        return matrix;
+        matrix
     }
 }
 
@@ -63,35 +63,32 @@ impl Mul<Tuple> for Matrix {
             tuple_tmp[row] = val;
         }
 
-        return Tuple::new_tuple(
+        Tuple::new_tuple(
             tuple_tmp[0],
             tuple_tmp[1],
             tuple_tmp[2],
             tuple_tmp[3] as i64,
-        );
+        )
     }
 }
 
 impl Matrix {
     pub fn new_matrix(size: usize) -> Matrix {
-        if size < 1 || size > 4 {
+        if !(1..=4).contains(&size) {
             panic!("Matrix size can only be 2; 3 or 4")
         }
         Matrix {
-            size: size,
+            size,
             matrix: vec![0.0; size * size],
         }
     }
 
     pub fn new_matrix_with_data(size: usize, data: Vec<f64>) -> Matrix {
-        Matrix {
-            size: size,
-            matrix: data,
-        }
+        Matrix { size, matrix: data }
     }
 
     pub fn new_identity_matrix(size: usize) -> Matrix {
-        if size < 1 || size > 4 {
+        if !(1..=4).contains(&size) {
             panic!("Matrix size can only be 2; 3 or 4")
         }
         let mut matrix = Matrix {
@@ -103,14 +100,14 @@ impl Matrix {
             matrix.set_element(row, row, 1.0);
         }
 
-        return matrix;
+        matrix
     }
 
     pub fn element(&self, row: usize, column: usize) -> f64 {
         self.matrix[(row * self.size) + column]
     }
 
-    pub fn set_element(&mut self, row: usize, column: usize, value: f64) -> () {
+    pub fn set_element(&mut self, row: usize, column: usize, value: f64) {
         self.matrix[(row * self.size) + column] = value;
     }
 
@@ -122,7 +119,7 @@ impl Matrix {
                 matrix.set_element(row, col, self.element(col, row));
             }
         }
-        return matrix;
+        matrix
     }
 
     pub fn determinant(&self) -> f64 {
@@ -148,9 +145,7 @@ impl Matrix {
                 }
             }
         }
-        let matrix = Matrix::new_matrix_with_data(self.size - 1, data_vec);
-
-        return matrix;
+        Matrix::new_matrix_with_data(self.size - 1, data_vec)
     }
 
     pub fn minor(&self, row: usize, col: usize) -> f64 {
@@ -170,7 +165,7 @@ impl Matrix {
 
     pub fn inverse(&self) -> Result<Matrix, error::TracerError> {
         if !self.is_invertible() {
-            return Err(error::TracerError::new_simple(ErrorKind::NotInversible));
+            Err(error::TracerError::new_simple(ErrorKind::NotInversible))
         } else {
             let mut m2 = Matrix::new_matrix(self.size);
 
@@ -180,7 +175,7 @@ impl Matrix {
                     m2.set_element(col, row, c / self.determinant());
                 }
             }
-            return Ok(m2);
+            Ok(m2)
         }
     }
 }

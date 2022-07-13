@@ -1,7 +1,6 @@
 use std::usize;
 
 use crate::color::Color;
-use crate::utils::*;
 
 #[derive(Debug, Clone)]
 pub struct Canvas {

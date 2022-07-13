@@ -1,5 +1,4 @@
 use crate::matrix::Matrix;
-use crate::tuple::Tuple;
 
 pub fn create_translation(x: f64, y: f64, z: f64) -> Matrix {
     let mut m = Matrix::new_identity_matrix(4);
@@ -96,6 +95,7 @@ impl Matrix {
 #[cfg(test)]
 mod transformation_tests {
     use std::f64::consts::PI;
+    use crate::tuple::Tuple;
 
     use super::*;
 

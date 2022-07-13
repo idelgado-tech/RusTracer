@@ -1,6 +1,4 @@
-use std::f64::consts::*;
 use std::ops::Add;
-use std::ops::Deref;
 use std::ops::Div;
 use std::ops::Mul;
 use std::ops::Sub;
@@ -9,8 +7,8 @@ use crate::utils::*;
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum W {
-    POINT,
-    VECTOR,
+    Point,
+    Vector,
 }
 
 impl Add for W {
@@ -18,9 +16,9 @@ impl Add for W {
 
     fn add(self, other: W) -> W {
         match (self, other) {
-            (W::POINT, W::VECTOR) => W::POINT,
-            (W::VECTOR, W::POINT) => W::POINT,
-            (W::VECTOR, W::VECTOR) => W::VECTOR,
+            (W::Point, W::Vector) => W::Point,
+            (W::Vector, W::Point) => W::Point,
+            (W::Vector, W::Vector) => W::Vector,
             (_, _) => panic!("W ADD , case not supported"),
         }
     }
@@ -31,9 +29,9 @@ impl Sub for W {
 
     fn sub(self, other: W) -> W {
         match (self, other) {
-            (W::POINT, W::VECTOR) => W::POINT,
-            (W::VECTOR, W::VECTOR) => W::VECTOR,
-            (W::POINT, W::POINT) => W::VECTOR,
+            (W::Point, W::Vector) => W::Point,
+            (W::Vector, W::Vector) => W::Vector,
+            (W::Point, W::Point) => W::Vector,
             (_, _) => panic!("W ADD , case not supported"),
         }
     }
@@ -42,17 +40,16 @@ impl Sub for W {
 impl W {
     pub fn from_int(float: isize) -> W {
         match float {
-            0 => W::VECTOR,
-            1 => W::POINT,
+            0 => W::Vector,
+            1 => W::Point,
             _ => panic!("Tuple must be point OR vector, input w value : {}", float),
         }
     }
 
     pub fn to_int(w: W) -> isize {
         match w {
-            W::VECTOR => 0,
-            W::POINT => 1,
-            _ => panic!("Tuple must be point OR vector, input w value : {:?}", w),
+            W::Vector => 0,
+            W::Point => 1,
         }
     }
 }
@@ -71,7 +68,7 @@ impl Tuple {
             x,
             y,
             z,
-            w: W::POINT,
+            w: W::Point,
         }
     }
 
@@ -80,7 +77,7 @@ impl Tuple {
             x,
             y,
             z,
-            w: W::VECTOR,
+            w: W::Vector,
         }
     }
 
@@ -90,8 +87,8 @@ impl Tuple {
             y,
             z,
             w: match w {
-                0 => W::VECTOR,
-                1 => W::POINT,
+                0 => W::Vector,
+                1 => W::Point,
                 _ => panic!("Tuple must be point OR vector, input w value : {}", w),
             },
         }
@@ -103,7 +100,7 @@ impl Tuple {
     }
 
     pub fn magnitude(&self) -> f64 {
-        if self.w == W::POINT {
+        if self.w == W::Point {
             panic!("magnitude is only for vectors")
         }
         (self.x.powi(2) + self.y.powi(2) + self.z.powi(2)).sqrt()
@@ -114,7 +111,7 @@ impl Tuple {
     }
 
     pub fn normalize(self) -> Tuple {
-        if self.w == W::POINT {
+        if self.w == W::Point {
             panic!("normalisation is only for vectors")
         }
         let magnitude = self.magnitude();
@@ -122,14 +119,14 @@ impl Tuple {
     }
 
     pub fn dot_product(a: &Tuple, b: &Tuple) -> f64 {
-        if (a.w == W::POINT) || (b.w == W::POINT) {
+        if (a.w == W::Point) || (b.w == W::Point) {
             panic!("dot product is only for vectors")
         }
         a.x * b.x + a.y * b.y + a.z * b.z
     }
 
     pub fn cross_product(a: &Tuple, b: &Tuple) -> Tuple {
-        if (a.w == W::POINT) || (b.w == W::POINT) {
+        if (a.w == W::Point) || (b.w == W::Point) {
             panic!("cross product is only for vectors")
         }
         Tuple::new_vector(
@@ -139,14 +136,6 @@ impl Tuple {
         )
     }
 }
-
-// impl Deref for Tuple {
-//     type Target = Tuple;
-
-//     fn deref(&self) -> &Tuple {
-//         self
-//     }
-// }
 
 impl PartialEq for Tuple {
     fn eq(&self, other: &Self) -> bool {
@@ -219,13 +208,13 @@ mod tuple_tests {
         assert!(compare_float(tuple.x, 4.3));
         assert!(compare_float(tuple.y, -4.2));
         assert!(compare_float(tuple.z, 3.1));
-        assert_eq!(tuple.w, W::POINT);
+        assert_eq!(tuple.w, W::Point);
 
         let tuple = Tuple::new_tuple(4.3, -4.2, 3.1, 0);
         assert!(compare_float(tuple.x, 4.3));
         assert!(compare_float(tuple.y, -4.2));
         assert!(compare_float(tuple.z, 3.1));
-        assert_eq!(tuple.w, W::VECTOR);
+        assert_eq!(tuple.w, W::Vector);
     }
 
     #[test]
@@ -234,7 +223,7 @@ mod tuple_tests {
         assert!(compare_float(tuple.x, 4.0));
         assert!(compare_float(tuple.y, -4.0));
         assert!(compare_float(tuple.z, 3.0));
-        assert_eq!(tuple.w, W::POINT);
+        assert_eq!(tuple.w, W::Point);
     }
 
     #[test]
@@ -243,7 +232,7 @@ mod tuple_tests {
         assert!(compare_float(tuple.x, 4.0));
         assert!(compare_float(tuple.y, -4.0));
         assert!(compare_float(tuple.z, 3.0));
-        assert_eq!(tuple.w, W::VECTOR);
+        assert_eq!(tuple.w, W::Vector);
     }
 
     #[test]

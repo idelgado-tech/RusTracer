@@ -11,7 +11,6 @@ mod ray;
 
 use minifb::{Key, Window, WindowOptions};
 
-use crate::canvas::*;
 use crate::tuple::*;
 
 #[derive(Debug, Clone)]

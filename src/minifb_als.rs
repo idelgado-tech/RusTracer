@@ -1,7 +1,7 @@
 use crate::canvas::*;
 
 extern crate minifb;
-use minifb::{Key, Window, WindowOptions};
+use minifb::{Window, WindowOptions};
 
 pub const MAX_WIDTH: usize = 640;
 pub const MAX_HEIGHT: usize = 360;

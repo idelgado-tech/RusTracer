@@ -11,10 +11,10 @@ pub struct Ray {
 
 impl Ray {
     pub fn new(origin: Tuple, direction: Tuple) -> Ray {
-        if origin.w != W::POINT {
+        if origin.w != W::Point {
             panic!("Ray::new origin must be a point")
         }
-        if direction.w != W::VECTOR {
+        if direction.w != W::Vector {
             panic!("Ray::new origin must be a vector")
         }
         Ray { origin, direction }
