@@ -1,17 +1,21 @@
 mod canvas;
 mod color;
+mod error;
+mod matrix;
 mod minifb_als;
 mod ppm;
+mod ray;
 mod transformation;
 mod tuple;
 mod utils;
-mod matrix;
-mod error;
-mod ray;
 
 use minifb::{Key, Window, WindowOptions};
+use ray::Sphere;
 
-use crate::tuple::*;
+use crate::{
+    ray::{intersect, Ray},
+    tuple::*,
+};
 
 #[derive(Debug, Clone)]
 pub struct Env {
@@ -32,43 +36,46 @@ fn tick(env: &Env, proj: &Proj) -> Proj {
 }
 
 fn main() {
-    let gravity = tuple::Tuple::new_vector(0.0, -0.1, 0.0);
-    let wind = tuple::Tuple::new_vector(-0.01, 0.0, 0.0);
-    let env = Env { gravity, wind };
+    // Variables cast
+    let ray_origin = Tuple::new_point(0.0, 0.0, -5.0);
+    let wall_z = 10.0;
+    let wall_size = 7.0;
 
-    let  position = tuple::Tuple::new_point(0.0, 1.0, 0.0);
-    let velocity = tuple::Tuple::new_vector(3.0, 3.0, 0.0);
-    let mut proj = Proj {
-        position: position.clone(),
-        velocity,
-    };
-
-    let mut position_vec: Vec<Tuple> = Vec::with_capacity(100);
-    position_vec.push(position);
-
-    while position_vec.last().unwrap().y > 0.0 {
-        println!("Here loop = {:?} ", position_vec.len());
-        let new_proj = tick(&env, &proj);
-        proj = new_proj;
-        position_vec.push(proj.position.clone())
-    }
-    println!("Here list = {:?} ", position_vec);
+    let canvas_size_pixels = 640.0;
+    let pixel_size = wall_size / canvas_size_pixels;
+    let half = wall_size / 2.0;
 
     let mut canvas = canvas::Canvas::new_canvas_with_color(
-        minifb_als::MAX_WIDTH,
-        minifb_als::MAX_HEIGHT,
+        canvas_size_pixels as usize,
+        canvas_size_pixels as usize,
         color::Color::new_color(1.0, 1.0, 1.0),
     );
 
-    for elem in position_vec {
-        println!("Here elem = {:?} ", elem);
+    let shape = Sphere::sphere();
 
-        canvas.set_pixel_color(
-        
-            elem.x as usize,
-            canvas.height - std::cmp::max(elem.y as usize, 1),
-            color::AZURE_BLUE,
-        );
+    for y in 0..canvas_size_pixels as isize {
+        println!("Here elem y = {:?} ", y);
+        let world_y = half - pixel_size * y as f64;
+
+        for x in 0..canvas_size_pixels as isize {
+            // println!("Here elem x = {:?} ", x);
+
+            let world_x = half - pixel_size * x as f64;
+            let position = Tuple::new_point(world_x, world_y, wall_z);
+            let r = Ray::new(
+                ray_origin.clone(),
+                (position - ray_origin.clone()).normalize(),
+            );
+            let xs = intersect(&shape, r);
+
+            if xs.len() > 0 {
+                canvas.set_pixel_color(
+                    x as usize,
+                    y as usize,
+                    color::LIGHT_VIOLET,
+                );
+            }
+        }
     }
 
     let buffer = minifb_als::buffer_from_canvas(&canvas);

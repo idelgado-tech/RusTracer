@@ -32,7 +32,7 @@ impl Sub for W {
             (W::Point, W::Vector) => W::Point,
             (W::Vector, W::Vector) => W::Vector,
             (W::Point, W::Point) => W::Vector,
-            (_, _) => panic!("W ADD , case not supported"),
+            (_, _) => panic!("W ADD Vector + Point, it don't mean anything, case not supported"),
         }
     }
 }
