@@ -80,7 +80,7 @@ impl Matrix {
         rotation_z * self
     }
 
-    pub fn shearing(x_y: f64, x_z: f64, y_x: f64, y_z: f64, z_x: f64, z_y: f64) -> Matrix {
+    pub fn shearing(self,x_y: f64, x_z: f64, y_x: f64, y_z: f64, z_x: f64, z_y: f64) -> Matrix {
         let mut m = Matrix::new_identity_matrix(4);
         m.set_element(0, 1, x_y);
         m.set_element(0, 2, x_z);

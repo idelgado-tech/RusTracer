@@ -1,7 +1,12 @@
 use std::vec;
 use uuid::Uuid;
 
-use crate::{matrix::*, transformation, tuple::*};
+use crate::{
+    matrix::*,
+    reflection::Material,
+    transformation,
+    tuple::{self, *},
+};
 
 #[derive(Debug, Clone)]
 pub struct Ray {
@@ -53,6 +58,7 @@ pub struct Sphere {
     pub radius: f64,
     pub id: Uuid,
     pub transform: Matrix,
+    pub material: Material,
 }
 
 impl Sphere {
@@ -62,11 +68,24 @@ impl Sphere {
             radius: 1.0,
             id: Uuid::new_v4(),
             transform: Matrix::new_identity_matrix(4),
+            material: Material::material(),
         }
     }
     pub fn set_transform(&mut self, new_stransform: &Matrix) -> () {
         self.transform = new_stransform.clone();
     }
+
+    pub fn normal_at_point(self, p: Tuple) -> Tuple {
+        let object_point = self.transform.inverse().unwrap() * p;
+        let object_normal = object_point - Tuple::new_point(0.0, 0.0, 0.0);
+        let mut world_normal = self.transform.inverse().unwrap().transpose() * object_normal;
+        world_normal.w = tuple::W::from_int(0);
+        world_normal.normalize()
+    }
+}
+
+pub fn reflect(inv: &Tuple, normal: &Tuple) -> Tuple {
+    inv.clone() - normal.clone() * 2.0 * Tuple::dot_product(&inv, &normal)
 }
 
 pub fn intersect(sphere: &Sphere, ray: Ray) -> Vec<Intersection> {
@@ -88,6 +107,7 @@ pub fn intersect(sphere: &Sphere, ray: Ray) -> Vec<Intersection> {
         ]
     }
 }
+
 pub fn hit_intersections(intersections: Vec<Intersection>) -> Option<Intersection> {
     let mut tmp_instersections = intersections.clone();
     tmp_instersections.retain(|value| value.t > 0.0);
@@ -103,6 +123,123 @@ pub fn hit_intersections(intersections: Vec<Intersection>) -> Option<Intersectio
 mod transformation_tests {
     use super::*;
     use crate::transformation;
+    use std::f64::consts::PI;
+
+    #[test]
+    ///Reflecting a vector approaching at 45°
+    fn reflection() {
+        let v = Tuple::new_vector(1.0, -1.0, 0.0);
+        let n = Tuple::new_vector(0.0, 1.0, 0.0);
+
+        let r = reflect(&v, &n);
+        assert_eq!(r, Tuple::new_vector(1.0, 1.0, 0.0));
+    }
+
+    #[test]
+    ///Reflecting a vector off a slanted surface
+    fn reflection_slanted() {
+        let v = Tuple::new_vector(0.0, -1.0, 0.0);
+        let n = Tuple::new_vector(2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0, 0.0);
+
+        let r = reflect(&v, &n);
+        assert_eq!(r, Tuple::new_vector(1.0, 0.0, 0.0));
+    }
+
+    #[test]
+    ///The normal on a sphere at a point on the x axis
+    fn sphere_normal_x() {
+        let s = Sphere::sphere();
+        let n = s.normal_at_point(Tuple::new_point(1.0, 0.0, 0.0));
+
+        assert_eq!(n, Tuple::new_vector(1.0, 0.0, 0.0));
+    }
+
+    #[test]
+    ///The normal on a sphere at a point on the y axis
+    fn sphere_normal_y() {
+        let s = Sphere::sphere();
+        let n = s.normal_at_point(Tuple::new_point(0.0, 1.0, 0.0));
+
+        assert_eq!(n, Tuple::new_vector(0.0, 1.0, 0.0));
+    }
+
+    #[test]
+    ///The normal on a sphere at a point on the z axis
+    fn sphere_normal_z() {
+        let s = Sphere::sphere();
+        let n = s.normal_at_point(Tuple::new_point(0.0, 0.0, 1.0));
+
+        assert_eq!(n, Tuple::new_vector(0.0, 0.0, 1.0));
+    }
+
+    #[test]
+    ///Computing the normal on a translated sphere
+    fn sphere_normal_translation() {
+        let mut s = Sphere::sphere();
+        s.set_transform(&transformation::create_translation(0.0, 1.0, 0.0));
+        let n = s.normal_at_point(Tuple::new_point(
+            0.0,
+            1.7071067811865475,
+            -0.7071067811865476,
+        ));
+
+        assert_eq!(
+            n,
+            Tuple::new_vector(0.0, 0.7071067811865475, -0.7071067811865476)
+        );
+    }
+
+    #[test]
+    ///Computing the normal on a translated sphere
+    fn sphere_normal_transformed() {
+        let mut s = Sphere::sphere();
+        let transformation = transformation::create_scaling(1.0, 0.5, 1.0)
+            * transformation::create_rotation_z(PI / 5.0);
+        s.set_transform(&transformation);
+        let n = s.normal_at_point(Tuple::new_point(
+            0.0,
+            2.0_f64.sqrt() / 2.0,
+            -2.0_f64.sqrt() / 2.0,
+        ));
+
+        assert_eq!(
+            n,
+            Tuple::new_vector(0.0, 0.9701425001453319, -0.24253562503633294)
+        );
+    }
+
+    #[test]
+    ///The normal on a sphere at a point on the y axis
+    fn sphere_normal_nonaxial() {
+        let s = Sphere::sphere();
+        let n = s.normal_at_point(Tuple::new_point(
+            3.0_f64.sqrt() / 3.0,
+            3.0_f64.sqrt() / 3.0,
+            3.0_f64.sqrt() / 3.0,
+        ));
+
+        assert_eq!(
+            n,
+            Tuple::new_vector(
+                3.0_f64.sqrt() / 3.0,
+                3.0_f64.sqrt() / 3.0,
+                3.0_f64.sqrt() / 3.0
+            )
+        );
+    }
+
+    #[test]
+    ///The normal on a sphere at a point on the y axis
+    fn sphere_normalized() {
+        let s = Sphere::sphere();
+        let n = s.normal_at_point(Tuple::new_point(
+            3.0_f64.sqrt() / 3.0,
+            3.0_f64.sqrt() / 3.0,
+            3.0_f64.sqrt() / 3.0,
+        ));
+
+        assert_eq!(n.clone(), n.normalize());
+    }
 
     #[test]
     ///Creating a ray

@@ -36,6 +36,12 @@ pub const LIGHT_VIOLET: Color = Color {
     blue: 1.0,
 };
 
+pub const BLACK: Color = Color {
+    red: 0.0,
+    green: 0.0,
+    blue: 0.0,
+};
+
 impl Add for Color {
     type Output = Color;
 
