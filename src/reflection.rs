@@ -1,5 +1,3 @@
-use std::intrinsics::powf64;
-
 use crate::{color::*, matrix::Matrix, ray::reflect, tuple::Tuple};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -54,19 +52,19 @@ impl Material {
     }
 }
 
-fn lighting(
+pub fn lighting(
     material: Material,
     light: PointLight,
     point: Tuple,
     eyev: Tuple,
     normalv: Tuple,
 ) -> Color {
-    let effective_color = material.color * light.intensity;
+    let effective_color = material.color * light.intensity.clone();
     let ligthv = (light.position - point).normalize();
     let ambiant = effective_color.clone() * material.ambiant;
     let light_dot_normal = Tuple::dot_product(&ligthv, &normalv);
-    let mut diffuse;
-    let mut specular;
+    let diffuse;
+    let specular;
 
     if light_dot_normal < 0.0 {
         diffuse = BLACK;
@@ -79,7 +77,7 @@ fn lighting(
             specular = BLACK;
         } else {
             let factor = f64::powf(reflect_dot_eye, material.shininess);
-            let specular = light.intensity * material.specular * factor;
+            specular = light.intensity * material.specular * factor;
         }
     }
     ambiant + diffuse + specular
@@ -87,10 +85,12 @@ fn lighting(
 
 #[cfg(test)]
 mod matrix_tests {
+    use crate::ray::Sphere;
+
     use super::*;
 
     #[test]
-    ///Constructing and inspecting a 4x4 matrix
+    ///A point light has a position and intensity
     fn point_light_creation() {
         let intensity = Color::new_color(1.0, 1.0, 1.0);
         let position = Tuple::new_point(0.0, 0.0, 0.0);
@@ -101,7 +101,7 @@ mod matrix_tests {
     }
 
     #[test]
-    ///Constructing and inspecting a 4x4 matrix
+    ///The default material
     fn material_creation() {
         let material = Material::material();
 
@@ -112,35 +112,84 @@ mod matrix_tests {
         assert_eq!(material.shininess, 200.0);
     }
 
-    //     ​Background​:
-    // ​ 	  ​Given​ m ← material()
-    // ​ 	    ​And​ position ← point(0, 0, 0)
+    #[test]
+    ///A sphere may be assigned a material
+    fn sphere_material_creation() {
+        let mut s = Sphere::sphere();
+        let mut material = Material::material();
+        material.ambiant = 1.0;
+        s.material = material.clone();
+        assert_eq!(s.material, material);
+    }
 
-    // ​Scenario​: Lighting with the eye between the light and the surface
-    // ​ 	  ​Given​ eyev ← vector(0, 0, -1)
-    // ​ 	    ​And​ normalv ← vector(0, 0, -1)
-    // ​ 	    ​And​ light ← point_light(point(0, 0, -10), color(1, 1, 1))
-    // ​ 	  ​When​ result ← lighting(m, light, position, eyev, normalv)
-    // ​ 	  ​Then​ result = color(1.9, 1.9, 1.9)
+    #[test]
+    ///Lighting with the eye between the light and the surface
+    fn lighting_1() {
+        let m = Material::material();
+        let position = Tuple::new_point(0.0, 0.0, 0.0);
 
-    // ​Scenario​: Lighting with the eye between light and surface, eye offset 45°
-    // ​ 	  ​Given​ eyev ← vector(0, √2/2, -√2/2)
-    // ​ 	    ​And​ normalv ← vector(0, 0, -1)
-    // ​ 	    ​And​ light ← point_light(point(0, 0, -10), color(1, 1, 1))
-    // ​ 	  ​When​ result ← lighting(m, light, position, eyev, normalv)
-    // ​ 	  ​Then​ result = color(1.0, 1.0, 1.0)
+        let eyev = Tuple::new_vector(0.0, 0.0, -1.0);
+        let normalv = Tuple::new_vector(0.0, 0.0, -1.0);
+        let light = PointLight::new_point_light(
+            Color::new_color(1.0, 1.0, 1.0),
+            Tuple::new_point(0.0, 0.0, -10.0),
+        );
 
-    // ​Scenario​: Lighting with eye in the path of the reflection vector
-    // ​ 	  ​Given​ eyev ← vector(0, -√2/2, -√2/2)
-    // ​ 	    ​And​ normalv ← vector(0, 0, -1)
-    // ​ 	    ​And​ light ← point_light(point(0, 10, -10), color(1, 1, 1))
-    // ​ 	  ​When​ result ← lighting(m, light, position, eyev, normalv)
-    // ​ 	  ​Then​ result = color(1.6364, 1.6364, 1.6364)
+        let result = lighting(m, light, position, eyev, normalv);
+        assert_eq!(result, Color::new_color(1.9, 1.9, 1.9));
+    }
 
-    // Scenario​: Lighting with the light behind the surface
-    // ​ 	  ​Given​ eyev ← vector(0, 0, -1)
-    // ​ 	    ​And​ normalv ← vector(0, 0, -1)
-    // ​ 	    ​And​ light ← point_light(point(0, 0, 10), color(1, 1, 1))
-    // ​ 	  ​When​ result ← lighting(m, light, position, eyev, normalv)
-    // ​ 	  ​Then​ result = color(0.1, 0.1, 0.1)
+    #[test]
+    ///Lighting with the eye between light and surface, eye offset 45°
+    fn lighting_2() {
+        let m = Material::material();
+        let position = Tuple::new_point(0.0, 0.0, 0.0);
+
+        let eyev = Tuple::new_vector(0.0, 2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0);
+        let normalv = Tuple::new_vector(0.0, 0.0, -1.0);
+        let light = PointLight::new_point_light(
+            Color::new_color(1.0, 1.0, 1.0),
+            Tuple::new_point(0.0, 0.0, -10.0),
+        );
+
+        let result = lighting(m, light, position, eyev, normalv);
+        assert_eq!(result, Color::new_color(1.0, 1.0, 1.0));
+    }
+
+    #[test]
+    ///Lighting with the eye between light and surface, eye offset 45°
+    fn lighting_3() {
+        let m = Material::material();
+        let position = Tuple::new_point(0.0, 0.0, 0.0);
+
+        let eyev = Tuple::new_vector(0.0, -2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0);
+        let normalv = Tuple::new_vector(0.0, 0.0, -1.0);
+        let light = PointLight::new_point_light(
+            Color::new_color(1.0, 1.0, 1.0),
+            Tuple::new_point(0.0, 10.0, -10.0),
+        );
+
+        let result = lighting(m, light, position, eyev, normalv);
+        assert_eq!(
+            result,
+            Color::new_color(1.6363961030678928, 1.6363961030678928, 1.6363961030678928)
+        );
+    }
+
+    #[test]
+    ///Lighting with the eye between light and surface, eye offset 45°
+    fn lighting_4() {
+        let m = Material::material();
+        let position = Tuple::new_point(0.0, 0.0, 0.0);
+
+        let eyev = Tuple::new_vector(0.0, 0.0, -1.0);
+        let normalv = Tuple::new_vector(0.0, 0.0, -1.0);
+        let light = PointLight::new_point_light(
+            Color::new_color(1.0, 1.0, 1.0),
+            Tuple::new_point(0.0, 0.0, 10.0),
+        );
+
+        let result = lighting(m, light, position, eyev, normalv);
+        assert_eq!(result, Color::new_color(0.1, 0.1, 0.1));
+    }
 }

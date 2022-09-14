@@ -39,8 +39,8 @@ impl Ray {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Intersection {
-    t: f64,
-    object: Sphere,
+    pub t: f64,
+    pub object: Sphere,
 }
 
 impl Intersection {
