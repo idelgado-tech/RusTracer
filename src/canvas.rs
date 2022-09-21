@@ -46,6 +46,7 @@ mod canvas_tests {
     use super::*;
 
     #[test]
+///Creating a canvas
     fn canvas_creation() {
         let canvas = Canvas::new_canvas(10, 20);
         assert_eq!(canvas.height, 20);
