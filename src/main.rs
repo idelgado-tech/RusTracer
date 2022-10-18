@@ -73,10 +73,10 @@ fn main() {
 
             if hit.clone().is_some() {
                 let point = r.clone().position(hit.clone().unwrap().t);
-                let normalv = hit.clone().unwrap().object.normal_at_point(point.clone());
+                let normalv = hit.as_ref().unwrap().object.normal_at_point(&point);
                 let eyev =  r.direction * -1.0;
 
-                let color = reflection::lighting(hit.unwrap().object.material, light.clone(), point, eyev, normalv);
+                let color = reflection::lighting(&hit.unwrap().object.material, &light, &point, &eyev, &normalv);
                 canvas.set_pixel_color(x as usize, canvas.height - y as usize, color);
             }
         }

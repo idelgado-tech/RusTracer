@@ -110,7 +110,7 @@ impl Tuple {
         (self.magnitude() - 1.0).abs() < 0.0001
     }
 
-    pub fn normalize(self) -> Tuple {
+    pub fn normalize(&self) -> Tuple {
         if self.w == W::Point {
             panic!("normalisation is only for vectors")
         }
@@ -194,6 +194,19 @@ impl Div<f64> for Tuple {
             y: self.y / scalar,
             z: self.z / scalar,
             w: self.w,
+        }
+    }
+}
+
+impl Div<f64> for &Tuple {
+    type Output = Tuple;
+
+    fn div(self, scalar: f64) -> Tuple {
+        Tuple {
+            x: self.x / scalar,
+            y: self.y / scalar,
+            z: self.z / scalar,
+            w: self.w.clone(),
         }
     }
 }

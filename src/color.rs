@@ -1,5 +1,6 @@
 use crate::utils::*;
 use std::ops::Add;
+use std::ops::AddAssign;
 use std::ops::Mul;
 use std::ops::Sub;
 
@@ -47,6 +48,15 @@ impl Add for Color {
 
     fn add(self, other: Color) -> Color {
         Color {
+            red: self.red + other.red,
+            green: self.green + other.green,
+            blue: self.blue + other.blue,
+        }
+    }
+}
+impl AddAssign for Color {
+    fn add_assign(&mut self, other: Color) {
+        *self = Color {
             red: self.red + other.red,
             green: self.green + other.green,
             blue: self.blue + other.blue,

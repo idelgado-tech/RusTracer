@@ -75,8 +75,8 @@ impl Sphere {
         self.transform = new_stransform.clone();
     }
 
-    pub fn normal_at_point(self, p: Tuple) -> Tuple {
-        let object_point = self.transform.inverse().unwrap() * p;
+    pub fn normal_at_point(&self, p: &Tuple) -> Tuple {
+        let object_point = self.transform.inverse().unwrap() * p.clone();
         let object_normal = object_point - Tuple::new_point(0.0, 0.0, 0.0);
         let mut world_normal = self.transform.inverse().unwrap().transpose() * object_normal;
         world_normal.w = tuple::W::from_int(0);
@@ -149,7 +149,7 @@ mod transformation_tests {
     ///The normal on a sphere at a point on the x axis
     fn sphere_normal_x() {
         let s = Sphere::sphere();
-        let n = s.normal_at_point(Tuple::new_point(1.0, 0.0, 0.0));
+        let n = s.normal_at_point(&Tuple::new_point(1.0, 0.0, 0.0));
 
         assert_eq!(n, Tuple::new_vector(1.0, 0.0, 0.0));
     }
@@ -158,7 +158,7 @@ mod transformation_tests {
     ///The normal on a sphere at a point on the y axis
     fn sphere_normal_y() {
         let s = Sphere::sphere();
-        let n = s.normal_at_point(Tuple::new_point(0.0, 1.0, 0.0));
+        let n = s.normal_at_point(&Tuple::new_point(0.0, 1.0, 0.0));
 
         assert_eq!(n, Tuple::new_vector(0.0, 1.0, 0.0));
     }
@@ -167,7 +167,7 @@ mod transformation_tests {
     ///The normal on a sphere at a point on the z axis
     fn sphere_normal_z() {
         let s = Sphere::sphere();
-        let n = s.normal_at_point(Tuple::new_point(0.0, 0.0, 1.0));
+        let n = s.normal_at_point(&Tuple::new_point(0.0, 0.0, 1.0));
 
         assert_eq!(n, Tuple::new_vector(0.0, 0.0, 1.0));
     }
@@ -177,7 +177,7 @@ mod transformation_tests {
     fn sphere_normal_translation() {
         let mut s = Sphere::sphere();
         s.set_transform(&transformation::create_translation(0.0, 1.0, 0.0));
-        let n = s.normal_at_point(Tuple::new_point(
+        let n = s.normal_at_point(&Tuple::new_point(
             0.0,
             1.7071067811865475,
             -0.7071067811865476,
@@ -196,7 +196,7 @@ mod transformation_tests {
         let transformation = transformation::create_scaling(1.0, 0.5, 1.0)
             * transformation::create_rotation_z(PI / 5.0);
         s.set_transform(&transformation);
-        let n = s.normal_at_point(Tuple::new_point(
+        let n = s.normal_at_point(&Tuple::new_point(
             0.0,
             2.0_f64.sqrt() / 2.0,
             -2.0_f64.sqrt() / 2.0,
@@ -212,7 +212,7 @@ mod transformation_tests {
     ///The normal on a sphere at a point on the y axis
     fn sphere_normal_nonaxial() {
         let s = Sphere::sphere();
-        let n = s.normal_at_point(Tuple::new_point(
+        let n = s.normal_at_point(&Tuple::new_point(
             3.0_f64.sqrt() / 3.0,
             3.0_f64.sqrt() / 3.0,
             3.0_f64.sqrt() / 3.0,
@@ -232,7 +232,7 @@ mod transformation_tests {
     ///The normal on a sphere at a point on the y axis
     fn sphere_normalized() {
         let s = Sphere::sphere();
-        let n = s.normal_at_point(Tuple::new_point(
+        let n = s.normal_at_point(&Tuple::new_point(
             3.0_f64.sqrt() / 3.0,
             3.0_f64.sqrt() / 3.0,
             3.0_f64.sqrt() / 3.0,

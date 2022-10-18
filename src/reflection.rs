@@ -53,14 +53,14 @@ impl Material {
 }
 
 pub fn lighting(
-    material: Material,
-    light: PointLight,
-    point: Tuple,
-    eyev: Tuple,
-    normalv: Tuple,
+    material: &Material,
+    light: &PointLight,
+    point: &Tuple,
+    eyev: &Tuple,
+    normalv: &Tuple,
 ) -> Color {
-    let effective_color = material.color * light.intensity.clone();
-    let ligthv = (light.position - point).normalize();
+    let effective_color = material.color.clone() * light.intensity.clone();
+    let ligthv = (light.position.clone() - point.clone()).normalize();
     let ambiant = effective_color.clone() * material.ambiant;
     let light_dot_normal = Tuple::dot_product(&ligthv, &normalv);
     let diffuse;
@@ -77,7 +77,7 @@ pub fn lighting(
             specular = BLACK;
         } else {
             let factor = f64::powf(reflect_dot_eye, material.shininess);
-            specular = light.intensity * material.specular * factor;
+            specular = light.intensity.clone() * material.specular * factor;
         }
     }
     ambiant + diffuse + specular
@@ -135,7 +135,7 @@ mod matrix_tests {
             Tuple::new_point(0.0, 0.0, -10.0),
         );
 
-        let result = lighting(m, light, position, eyev, normalv);
+        let result = lighting(&m, &light, &position, &eyev, &normalv);
         assert_eq!(result, Color::new_color(1.9, 1.9, 1.9));
     }
 
@@ -152,7 +152,7 @@ mod matrix_tests {
             Tuple::new_point(0.0, 0.0, -10.0),
         );
 
-        let result = lighting(m, light, position, eyev, normalv);
+        let result = lighting(&m, &light, &position, &eyev, &normalv);
         assert_eq!(result, Color::new_color(1.0, 1.0, 1.0));
     }
 
@@ -169,7 +169,7 @@ mod matrix_tests {
             Tuple::new_point(0.0, 10.0, -10.0),
         );
 
-        let result = lighting(m, light, position, eyev, normalv);
+        let result = lighting(&m, &light, &position, &eyev, &normalv);
         assert_eq!(
             result,
             Color::new_color(1.6363961030678928, 1.6363961030678928, 1.6363961030678928)
@@ -189,7 +189,7 @@ mod matrix_tests {
             Tuple::new_point(0.0, 0.0, 10.0),
         );
 
-        let result = lighting(m, light, position, eyev, normalv);
+        let result = lighting(&m, &light, &position, &eyev, &normalv);
         assert_eq!(result, Color::new_color(0.1, 0.1, 0.1));
     }
 }
