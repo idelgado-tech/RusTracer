@@ -1,4 +1,4 @@
-use crate::matrix::Matrix;
+use crate::{matrix::Matrix, tuple::Tuple};
 
 pub fn create_translation(x: f64, y: f64, z: f64) -> Matrix {
     let mut m = Matrix::new_identity_matrix(4);
@@ -80,7 +80,7 @@ impl Matrix {
         rotation_z * self
     }
 
-    pub fn shearing(self,x_y: f64, x_z: f64, y_x: f64, y_z: f64, z_x: f64, z_y: f64) -> Matrix {
+    pub fn shearing(self, x_y: f64, x_z: f64, y_x: f64, y_z: f64, z_x: f64, z_y: f64) -> Matrix {
         let mut m = Matrix::new_identity_matrix(4);
         m.set_element(0, 1, x_y);
         m.set_element(0, 2, x_z);
@@ -92,10 +92,25 @@ impl Matrix {
     }
 }
 
+pub fn view_transform(from: &Tuple, to: &Tuple, up: &Tuple) -> Matrix {
+    let forward = (to.clone() - from.clone()).normalize();
+    let upn = up.normalize();
+    let left = Tuple::cross_product(&forward, &upn);
+    let true_up = Tuple::cross_product(&left, &forward);
+    let orientation = Matrix::new_matrix_with_data(
+        4,
+        vec![
+            left.x, left.y, left.z, 0.0, true_up.x, true_up.y, true_up.z, 0.0, -forward.x,
+            -forward.y, -forward.z, 0.0, 0.0, 0.0, 0.0, 1.0,
+        ],
+    );
+    orientation * create_translation(-from.x, -from.y, -from.z)
+}
+
 #[cfg(test)]
 mod transformation_tests {
-    use std::f64::consts::PI;
     use crate::tuple::Tuple;
+    use std::f64::consts::PI;
 
     use super::*;
 
@@ -301,5 +316,74 @@ mod transformation_tests {
         assert_eq!(point2, Tuple::new_point(15.0, 0.0, 7.0));
     }
 
+    #[test]
+    ///The transformation matrix for the default orientation    
+    fn view_tranformations() {
+        let from = Tuple::new_point(0.0, 0.0, 0.0);
+        let to = Tuple::new_point(0.0, 0.0, -1.0);
+        let up = Tuple::new_vector(0.0, 1.0, 0.0);
 
+        let t = view_transform(&from, &to, &up);
+
+        assert_eq!(Matrix::new_identity_matrix(4), t);
+    }
+
+    #[test]
+    ///A view transformation matrix looking in positive z direction
+    fn view_tranformations_z_positive() {
+        let from = Tuple::new_point(0.0, 0.0, 0.0);
+        let to = Tuple::new_point(0.0, 0.0, 1.0);
+        let up = Tuple::new_vector(0.0, 1.0, 0.0);
+
+        let t = view_transform(&from, &to, &up);
+
+        assert_eq!(create_scaling(-1.0, 1.0, -1.0), t);
+    }
+
+    #[test]
+    ///A view transformation matrix looking in positive z direction
+    fn view_tranformations_move_world() {
+        let from = Tuple::new_point(0.0, 0.0, 8.0);
+        let to = Tuple::new_point(0.0, 0.0, 0.0);
+        let up = Tuple::new_vector(0.0, 1.0, 0.0);
+
+        let t = view_transform(&from, &to, &up);
+
+        assert_eq!(create_translation(0.0, 0.0, -8.0), t);
+    }
+
+    #[test]
+    ///An arbitrary view transformation
+    fn view_tranformations_arbitrary() {
+        let from = Tuple::new_point(1.0, 3.0, 2.0);
+        let to = Tuple::new_point(4.0, -2.0, 8.0);
+        let up = Tuple::new_vector(1.0, 1.0, 0.0);
+
+        let t = view_transform(&from, &to, &up);
+
+        assert_eq!(
+            Matrix::new_matrix_with_data(
+                4,
+                vec![
+                    -0.5070925528371099,
+                    0.5070925528371099,
+                    0.6761234037828132,
+                    -2.366431913239846,
+                    0.7677159338596801,
+                    0.6060915267313263,
+                    0.12121830534626524,
+                    -2.8284271247461894,
+                    -0.35856858280031806,
+                    0.5976143046671968,
+                    -0.7171371656006361,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
+                ]
+            ),
+            t
+        );
+    }
 }
