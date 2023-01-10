@@ -333,7 +333,7 @@ mod matrix_tests {
     }
 
     #[test]
-    /// Multiplying a matrix by a tuple
+    /// Calculating the determinant of a 2x2 matrix
     fn matrix_determinant_2x2_matrix() {
         let data_vector_a = vec![1.0, 5.0, -3.0, 2.0];
         let ma = Matrix::new_matrix_with_data(2, data_vector_a);
@@ -342,7 +342,7 @@ mod matrix_tests {
     }
 
     #[test]
-    /// Multiplying a matrix by a tuple
+    ///Transposing the identity matrix
     fn matrix_transpose() {
         let data_vector_a = vec![
             0.0, 9.0, 3.0, 0.0, 9.0, 8.0, 0.0, 8.0, 1.0, 8.0, 5.0, 3.0, 0.0, 0.0, 5.0, 8.0,

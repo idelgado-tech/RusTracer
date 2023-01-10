@@ -89,7 +89,7 @@ impl Tuple {
             w: match w {
                 0 => W::Vector,
                 1 => W::Point,
-                _ => panic!("Tuple must be point OR vector, input w value : {}", w),
+                _ => W::Vector  // TODO check ça un jour panic!("Tuple must be point OR vector, input w value : {}", w),
             },
         }
     }

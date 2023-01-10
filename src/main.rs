@@ -1,3 +1,4 @@
+mod camera;
 mod canvas;
 mod color;
 mod error;
@@ -10,13 +11,17 @@ mod transformation;
 mod tuple;
 mod utils;
 mod world;
-mod camera;
 
 use std::f64::consts::PI;
 
+use camera::Camera;
 use color::Color;
+use matrix::Matrix;
 use minifb::{Key, Window, WindowOptions};
 use ray::Sphere;
+use reflection::Material;
+use transformation::{create_scaling, create_translation, view_transform};
+use world::World;
 
 use crate::{
     ray::{hit_intersections, intersect, Ray},
@@ -24,75 +29,89 @@ use crate::{
 };
 
 fn main() {
-    // Variables cast
-    let ray_origin = Tuple::new_point(0.0, 0.0, -5.0);
-    let wall_z = 10.0;
-    let wall_size = 7.0;
 
-    let canvas_size_pixels_width = 700.0;
-    let canvas_size_pixels_height = 700.0;
+    //floor
+    let mut floor = Sphere::sphere();
+    floor.set_transform(&create_scaling(10.0, 0.01, 10.0));
+    floor.material = Material::material();
+    floor.material.color = Color::new_color(1.0, 0.9, 0.9);
+    floor.material.specular = 0.0;
 
-    let pixel_size_width = wall_size / canvas_size_pixels_width;
-    let pixel_size_height = wall_size / canvas_size_pixels_height;
-
-    let half = wall_size / 2.0;
-
-    let mut canvas = canvas::Canvas::new_canvas_with_color(
-        canvas_size_pixels_width as usize,
-        canvas_size_pixels_height as usize,
-        color::Color::new_color(0.0, 0.0, 0.0),
+    //left wall
+    let mut left_wall = Sphere::sphere();
+    left_wall.set_transform(
+        &create_scaling(10.0, 0.01, 10.0)
+            .rotation_x(PI / 2.0)
+            .rotation_y(-PI / 4.0)
+            .translation(0.0, 0.0, 5.0),
     );
+    left_wall.material = floor.material.clone();
 
-    let mut shape = Sphere::sphere();
-    shape.material = reflection::Material::material();
-    shape.material.color = Color::new_color(1.0, 0.2, 1.0);
+    //rigth wall
+    let mut right_wall = Sphere::sphere();
+    right_wall.set_transform(
+        &create_scaling(10.0, 0.01, 10.0)
+            .rotation_x(PI / 2.0)
+            .rotation_y(PI / 4.0)
+            .translation(0.0, 0.0, 5.0),
+    );
+    right_wall.material = right_wall.material.clone();
 
+    //large sphere
+    let mut middle = Sphere::sphere();
+    middle.set_transform(&create_translation(-0.5, 1.0, 0.5));
+    middle.material = Material::material();
+    middle.material.color = Color::new_color(0.1, 1.0, 0.5);
+    middle.material.diffuse = 0.7;
+    middle.material.specular = 0.3;
+
+    //small sphere
+    let mut right = Sphere::sphere();
+    right.set_transform(&create_scaling(0.5, 0.5, 0.5).translation(1.5, 0.5, -0.5));
+    right.material = Material::material();
+    right.material.color = Color::new_color(0.5, 1.0, 0.1);
+    right.material.diffuse = 0.7;
+    right.material.specular = 0.3;
+
+    //smaller sphere
+    let mut left = Sphere::sphere();
+    left.set_transform(&create_scaling(0.33, 0.33, 0.33).translation(-1.5, 0.33, -0.75));
+    left.material = Material::material();
+    left.material.color = Color::new_color(1.0, 0.8, 0.1);
+    left.material.diffuse = 0.7;
+    left.material.specular = 0.3;
+
+    //world creation
+    let mut world = World::world();
+    world.objects = vec![floor, left_wall, right_wall, middle, right, left];
+
+    //ligth source
     let light_position = Tuple::new_point(-10.0, 10.0, -10.0);
     let light_color = Color::new_color(1.0, 1.0, 1.0);
     let light = reflection::PointLight::new_point_light(light_color, light_position);
+    world.light_sources.push(light.clone());
 
-    // let transformation =
-    //     transformation::create_shearing(1.0, 1.0, 0.0, 0.0, 0.0, 2.0).scaling(0.5, 0.5, 0.5);
-    // shape.set_transform(&transformation);
+    //camera
+    let canvas_size_pixels_width = 700;
+    let canvas_size_pixels_height = 700;
+    let mut camera = Camera::new(
+        canvas_size_pixels_width,
+        canvas_size_pixels_height,
+        PI / 3.0,
+    );
+    camera.transformation = view_transform(
+        &Tuple::new_point(0.0, 1.5, -5.0),
+        &Tuple::new_point(0.0, 1.0, 0.0),
+        &Tuple::new_vector(0.0, 1.0, 0.0),
+    );
 
-    for y in 0..canvas_size_pixels_height as isize {
-        // println!("Here elem y = {:?} ", y);
-        let world_y = half - pixel_size_height * y as f64;
-
-        for x in 0..canvas_size_pixels_width as isize {
-            // println!("Here elem x = {:?} ", x);
-
-            let world_x = (-1.0 * half) + pixel_size_width * x as f64;
-            let position = Tuple::new_point(world_x, world_y, wall_z);
-            let r = Ray::new(
-                ray_origin.clone(),
-                (position - ray_origin.clone()).normalize(),
-            );
-
-            let xs = intersect(&shape, r.clone());
-            let hit = hit_intersections(xs);
-
-            if hit.clone().is_some() {
-                let point = r.clone().position(hit.clone().unwrap().t);
-                let normalv = hit.as_ref().unwrap().object.normal_at_point(&point);
-                let eyev =  r.direction * -1.0;
-
-                let color = reflection::lighting(&hit.unwrap().object.material, &light, &point, &eyev, &normalv);
-                canvas.set_pixel_color(x as usize, canvas.height - y as usize, color);
-            }
-        }
-    }
-
+    //render result to a canvas
+    let canvas = camera.render(world);
     let buffer = minifb_als::buffer_from_canvas(&canvas);
-
     let mut window = minifb_als::new_window(&canvas);
 
     window
-        .update_with_buffer(
-            &buffer,
-            canvas_size_pixels_width as usize,
-            canvas_size_pixels_height as usize,
-        )
+        .update_with_buffer(&buffer, canvas_size_pixels_width, canvas_size_pixels_height)
         .unwrap();
 
     // Limit to max ~60 fps update rate
@@ -100,11 +119,7 @@ fn main() {
     while window.is_open() && !window.is_key_down(Key::Escape) {
         // We unwrap here as we want this code to exit if it fails. Real applications may want to handle this in a different way
         window
-            .update_with_buffer(
-                &buffer,
-                canvas_size_pixels_width as usize,
-                canvas_size_pixels_height as usize,
-            )
+            .update_with_buffer(&buffer, canvas_size_pixels_width, canvas_size_pixels_height)
             .unwrap();
     }
 }

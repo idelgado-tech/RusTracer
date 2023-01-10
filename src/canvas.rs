@@ -6,7 +6,7 @@ use crate::color::Color;
 pub struct Canvas {
     pub width: usize,
     pub height: usize,
-    pub pixels: Vec<Color>
+    pub pixels: Vec<Color>,
 }
 
 pub fn pos_from_index(index: usize, canvas: &Canvas) -> (usize, usize) {
@@ -15,12 +15,12 @@ pub fn pos_from_index(index: usize, canvas: &Canvas) -> (usize, usize) {
     (x, y)
 }
 
- pub fn index_from_pos(x: usize, y: usize, width: usize) -> usize {
+pub fn index_from_pos(x: usize, y: usize, width: usize) -> usize {
     (y * width) + x
 }
 
 impl Canvas {
-   pub  fn new_canvas(width: usize, height: usize) -> Canvas {
+    pub fn new_canvas(width: usize, height: usize) -> Canvas {
         Canvas {
             width,
             height,
@@ -35,6 +35,9 @@ impl Canvas {
             pixels: vec![color; width * height],
         }
     }
+    pub fn pixel_at(& self, x_pos: usize, y_pos: usize) -> Color {
+        self.pixels[index_from_pos(x_pos, y_pos, self.width)].clone()
+    }
 
     pub fn set_pixel_color(&mut self, x_pos: usize, y_pos: usize, color: Color) {
         self.pixels[index_from_pos(x_pos, y_pos, self.width)] = color;
@@ -46,7 +49,7 @@ mod canvas_tests {
     use super::*;
 
     #[test]
-///Creating a canvas
+    ///Creating a canvas
     fn canvas_creation() {
         let canvas = Canvas::new_canvas(10, 20);
         assert_eq!(canvas.height, 20);

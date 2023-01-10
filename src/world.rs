@@ -8,6 +8,8 @@ use crate::{
     tuple::Tuple,
 };
 
+pub const SHADOW_EPSILON: f64 = 0.00000000001;
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct World {
     pub light_sources: Vec<PointLight>,
@@ -53,16 +55,34 @@ impl World {
         intersections
     }
 
+    pub fn is_shadowed_for_light(&self, point: &Tuple, light_source: &PointLight) -> bool {
+        let v = light_source.position.clone() - point.clone();
+        let distance = v.magnitude();
+        let direction = v.normalize();
+
+        let r = Ray::new(point.clone(), direction);
+        let intersections = self.intersect_world(&r);
+
+        let h = hit_intersections(intersections);
+        if h.is_some() && h.unwrap().t < distance {
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn shade_hit(&self, comps: &Computation) -> Color {
         let mut shade = Color::new_color(0.0, 0.0, 0.0);
 
         for light in &self.light_sources {
+            let is_shadow = self.is_shadowed_for_light(&comps.over_point, &light);
             shade += lighting(
                 &comps.object.material,
                 light,
-                &comps.point,
+                &comps.over_point,
                 &comps.eyev,
                 &comps.normalv,
+                is_shadow,
             );
         }
         shade
@@ -84,6 +104,7 @@ pub struct Computation {
     pub t: f64,
     pub object: Sphere,
     pub point: Tuple,
+    pub over_point: Tuple,
     pub eyev: Tuple,
     pub normalv: Tuple,
     pub inside: bool,
@@ -95,6 +116,7 @@ impl Computation {
             t: 0.0,
             object: Sphere::sphere(),
             point: Tuple::new_point(0.0, 0.0, 0.0),
+            over_point: Tuple::new_point(0.0, 0.0, 0.0),
             eyev: Tuple::new_vector(0.0, 0.0, 0.0),
             normalv: Tuple::new_vector(0.0, 0.0, 0.0),
             inside: true,
@@ -118,11 +140,14 @@ pub fn prepare_computations(intersection: &Intersection, ray: &Ray) -> Computati
         comps.inside = false;
     }
 
+    comps.over_point = comps.point.clone() + comps.normalv.clone() * SHADOW_EPSILON;
     comps
 }
 
 #[cfg(test)]
 mod matrix_tests {
+    use crate::transformation::create_translation;
+
     use super::*;
 
     #[test]
@@ -246,11 +271,7 @@ mod matrix_tests {
 
         assert_eq!(
             c,
-            Color::new_color(
-                0.38066119308103435,
-                0.47582649135129296,
-                0.28549589481077575
-            )
+            Color::new_color(0.3806611930807966, 0.47582649135099575, 0.28549589481059745)
         );
     }
 
@@ -277,7 +298,7 @@ mod matrix_tests {
 
         assert_eq!(
             c,
-            Color::new_color(0.9049844720832575, 0.9049844720832575, 0.9049844720832575)
+            Color::new_color(0.9049844720800376, 0.9049844720800376, 0.9049844720800376)
         );
     }
 
@@ -306,11 +327,7 @@ mod matrix_tests {
 
         assert_eq!(
             color_at,
-            Color::new_color(
-                0.38066119308103435,
-                0.47582649135129296,
-                0.28549589481077575
-            )
+            Color::new_color(0.3806611930807966, 0.47582649135099575, 0.28549589481059745)
         );
     }
 
@@ -328,5 +345,85 @@ mod matrix_tests {
         let color_at = w.color_at(&ray);
 
         assert_eq!(color_at, w.objects[1].material.color);
+    }
+
+    #[test]
+    /// There is no shadow when nothing is collinear with point and light
+    fn shadow_1_test() {
+        let w = World::default_world();
+        let point = Tuple::new_point(0.0, 10.0, 0.0);
+
+        assert_eq!(w.is_shadowed_for_light(&point, &w.light_sources[0]), false);
+    }
+
+    #[test]
+    ///  The shadow when an object is between the point and the light
+    fn shadow_2_test() {
+        let w = World::default_world();
+        let point = Tuple::new_point(10.0, -10.0, 10.0);
+
+        assert_eq!(w.is_shadowed_for_light(&point, &w.light_sources[0]), true);
+    }
+
+    #[test]
+    ///There is no shadow when an object is behind the light
+    fn shadow_3_test() {
+        let w = World::default_world();
+        let point = Tuple::new_point(-20.0, 20.0, -20.0);
+
+        assert_eq!(w.is_shadowed_for_light(&point, &w.light_sources[0]), false);
+    }
+
+    #[test]
+    ///There is no shadow when an object is behind the light
+    fn shadow_4_test() {
+        let w = World::default_world();
+        let point = Tuple::new_point(-2.0, 2.0, -2.0);
+
+        assert_eq!(w.is_shadowed_for_light(&point, &w.light_sources[0]), false);
+    }
+
+    #[test]
+    ///shade_hit() is given an intersection in shadow
+    fn shade_hits_shadow_test() {
+        let mut w = World::world();
+        w.light_sources = vec![PointLight::new_point_light(
+            Color::new_color(1.0, 1.0, 1.0),
+            Tuple::new_point(0.0, 0.0, -10.0),
+        )];
+
+        let s1 = Sphere::sphere();
+        w.objects.push(s1.clone());
+        let mut s2 = Sphere::sphere();
+        s2.set_transform(&create_translation(0.0, 0.0, 10.0));
+        w.objects.push(s2.clone());
+
+        let ray = Ray::new(
+            Tuple::new_point(0.0, 0.0, 5.0),
+            Tuple::new_vector(0.0, 0.0, 1.0),
+        );
+
+        let i = Intersection { object: s2, t: 4.0 };
+        let comps = prepare_computations(&i, &ray);
+        let c = w.shade_hit(&comps);
+
+        assert_eq!(c, Color::new_color(0.1, 0.1, 0.1));
+    }
+
+    #[test]
+    ///The hit should offset the point
+    fn precomputing_epsilon_test() {
+        let ray = Ray::new(
+            Tuple::new_point(0.0, 0.0, -5.0),
+            Tuple::new_vector(0.0, 0.0, 1.0),
+        );
+        let mut s1 = Sphere::sphere();
+        s1.set_transform(&create_translation(0.0, 0.0, 1.0));
+        let i = Intersection { object: s1, t: 5.0 };
+        let comps = prepare_computations(&i, &ray);
+
+        assert_eq!(comps.over_point.z, -SHADOW_EPSILON);
+        assert!(comps.point.z > comps.over_point.z);
+        assert_eq!(comps.normalv, Tuple::new_vector(0.0, 0.0, -1.0));
     }
 }

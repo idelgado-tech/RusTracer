@@ -58,29 +58,34 @@ pub fn lighting(
     point: &Tuple,
     eyev: &Tuple,
     normalv: &Tuple,
+    in_shadow: bool,
 ) -> Color {
     let effective_color = material.color.clone() * light.intensity.clone();
-    let ligthv = (light.position.clone() - point.clone()).normalize();
     let ambiant = effective_color.clone() * material.ambiant;
-    let light_dot_normal = Tuple::dot_product(&ligthv, &normalv);
-    let diffuse;
-    let specular;
 
-    if light_dot_normal < 0.0 {
-        diffuse = BLACK;
-        specular = BLACK;
+    if in_shadow {
+        ambiant
     } else {
-        diffuse = effective_color * material.diffuse * light_dot_normal;
-        let reflectv = reflect(&(ligthv * -1.0), &normalv);
-        let reflect_dot_eye = Tuple::dot_product(&reflectv, &eyev);
-        if reflect_dot_eye <= 0.0 {
+        let ligthv = (light.position.clone() - point.clone()).normalize();
+        let light_dot_normal = Tuple::dot_product(&ligthv, &normalv);
+        let diffuse;
+        let specular;
+        if light_dot_normal < 0.0 {
+            diffuse = BLACK;
             specular = BLACK;
         } else {
-            let factor = f64::powf(reflect_dot_eye, material.shininess);
-            specular = light.intensity.clone() * material.specular * factor;
+            diffuse = effective_color * material.diffuse * light_dot_normal;
+            let reflectv = reflect(&(ligthv * -1.0), &normalv);
+            let reflect_dot_eye = Tuple::dot_product(&reflectv, &eyev);
+            if reflect_dot_eye <= 0.0 {
+                specular = BLACK;
+            } else {
+                let factor = f64::powf(reflect_dot_eye, material.shininess);
+                specular = light.intensity.clone() * material.specular * factor;
+            }
         }
+        ambiant + diffuse + specular
     }
-    ambiant + diffuse + specular
 }
 
 #[cfg(test)]
@@ -134,8 +139,9 @@ mod matrix_tests {
             Color::new_color(1.0, 1.0, 1.0),
             Tuple::new_point(0.0, 0.0, -10.0),
         );
+        let in_shadow = false;
 
-        let result = lighting(&m, &light, &position, &eyev, &normalv);
+        let result = lighting(&m, &light, &position, &eyev, &normalv, in_shadow);
         assert_eq!(result, Color::new_color(1.9, 1.9, 1.9));
     }
 
@@ -151,8 +157,9 @@ mod matrix_tests {
             Color::new_color(1.0, 1.0, 1.0),
             Tuple::new_point(0.0, 0.0, -10.0),
         );
+        let in_shadow = false;
 
-        let result = lighting(&m, &light, &position, &eyev, &normalv);
+        let result = lighting(&m, &light, &position, &eyev, &normalv, in_shadow);
         assert_eq!(result, Color::new_color(1.0, 1.0, 1.0));
     }
 
@@ -168,8 +175,9 @@ mod matrix_tests {
             Color::new_color(1.0, 1.0, 1.0),
             Tuple::new_point(0.0, 10.0, -10.0),
         );
+        let in_shadow = false;
 
-        let result = lighting(&m, &light, &position, &eyev, &normalv);
+        let result = lighting(&m, &light, &position, &eyev, &normalv, in_shadow);
         assert_eq!(
             result,
             Color::new_color(1.6363961030678928, 1.6363961030678928, 1.6363961030678928)
@@ -188,8 +196,35 @@ mod matrix_tests {
             Color::new_color(1.0, 1.0, 1.0),
             Tuple::new_point(0.0, 0.0, 10.0),
         );
+        let in_shadow = false;
 
-        let result = lighting(&m, &light, &position, &eyev, &normalv);
+        let result = lighting(&m, &light, &position, &eyev, &normalv, in_shadow);
         assert_eq!(result, Color::new_color(0.1, 0.1, 0.1));
     }
+
+    #[test]
+    /// Lighting with the surface in shadow
+    fn lighting_5() {
+        let m = Material::material();
+        let position = Tuple::new_point(0.0, 0.0, 0.0);
+
+        let eyev = Tuple::new_vector(0.0, 0.0, -1.0);
+        let normalv = Tuple::new_vector(0.0, 0.0, -1.0);
+        let light = PointLight::new_point_light(
+            Color::new_color(1.0, 1.0, 1.0),
+            Tuple::new_point(0.0, 0.0, -10.0),
+        );
+        let in_shadow = true;
+
+        let result = lighting(&m, &light, &position, &eyev, &normalv, in_shadow);
+        assert_eq!(result, Color::new_color(0.1, 0.1, 0.1));
+    }
+
+    //     ​ 	​Scenario​: Lighting with the surface in shadow
+    // ​ 	  ​Given​ eyev ← vector(0, 0, -1)
+    // ​ 	    ​And​ normalv ← vector(0, 0, -1)
+    // ​ 	    ​And​ light ← point_light(point(0, 0, -10), color(1, 1, 1))
+    // ​ 	    ​And​ in_shadow ← true
+    // ​ 	  ​When​ result ← lighting(m, light, position, eyev, normalv, in_shadow)
+    // ​ 	  ​Then​ result = color(0.1, 0.1, 0.1)
 }

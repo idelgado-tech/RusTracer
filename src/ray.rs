@@ -20,7 +20,7 @@ impl Ray {
             panic!("Ray::new origin must be a point")
         }
         if direction.w != W::Vector {
-            panic!("Ray::new origin must be a vector")
+            panic!("Ray::new direction must be a vector")
         }
         Ray { origin, direction }
     }
