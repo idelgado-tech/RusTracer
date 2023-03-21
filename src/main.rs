@@ -11,6 +11,8 @@ mod transformation;
 mod tuple;
 mod utils;
 mod world;
+mod shape;
+
 
 use std::f64::consts::PI;
 
