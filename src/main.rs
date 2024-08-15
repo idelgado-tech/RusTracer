@@ -7,57 +7,55 @@ mod minifb_als;
 mod ppm;
 mod ray;
 mod reflection;
+mod shape;
 mod transformation;
 mod tuple;
 mod utils;
 mod world;
-mod shape;
-
 
 use std::f64::consts::PI;
 
 use camera::Camera;
 use color::Color;
-use matrix::Matrix;
 use minifb::{Key, Window, WindowOptions};
-use ray::Sphere;
 use reflection::Material;
+use shape::{plane::Plane, shape::Shape, sphere::Sphere};
 use transformation::{create_scaling, create_translation, view_transform};
 use world::World;
 
-use crate::{
-    ray::{hit_intersections, intersect, Ray},
-    tuple::*,
-};
+use crate::tuple::*;
+
+// TODO
+// Better Unwrap
+// progesss system (en  parallelle ?)
 
 fn main() {
-
     //floor
-    let mut floor = Sphere::sphere();
-    floor.set_transform(&create_scaling(10.0, 0.01, 10.0));
+    let mut floor = Plane::plane();
+    // floor.set_transform(&create_scaling(10.0, 0.01, 10.0));
     floor.material = Material::material();
     floor.material.color = Color::new_color(1.0, 0.9, 0.9);
     floor.material.specular = 0.0;
 
-    //left wall
-    let mut left_wall = Sphere::sphere();
-    left_wall.set_transform(
-        &create_scaling(10.0, 0.01, 10.0)
-            .rotation_x(PI / 2.0)
-            .rotation_y(-PI / 4.0)
-            .translation(0.0, 0.0, 5.0),
-    );
-    left_wall.material = floor.material.clone();
+    // //left wall
+    // let mut left_wall = Sphere::sphere();
+    // left_wall.set_transform(
+    //     &create_scaling(10.0, 0.01, 10.0)
+    //         .rotation_x(PI / 2.0)
+    //         .rotation_y(-PI / 4.0)
+    //         .translation(0.0, 0.0, 5.0),
+    // );
+    // left_wall.material = floor.material.clone();
 
-    //rigth wall
-    let mut right_wall = Sphere::sphere();
-    right_wall.set_transform(
-        &create_scaling(10.0, 0.01, 10.0)
-            .rotation_x(PI / 2.0)
-            .rotation_y(PI / 4.0)
-            .translation(0.0, 0.0, 5.0),
-    );
-    right_wall.material = right_wall.material.clone();
+    // //rigth wall
+    // let mut right_wall = Sphere::sphere();
+    // right_wall.set_transform(
+    //     &create_scaling(10.0, 0.01, 10.0)
+    //         .rotation_x(PI / 2.0)
+    //         .rotation_y(PI / 4.0)
+    //         .translation(0.0, 0.0, 5.0),
+    // );
+    // right_wall.material = right_wall.material.clone();
 
     //large sphere
     let mut middle = Sphere::sphere();
@@ -85,7 +83,14 @@ fn main() {
 
     //world creation
     let mut world = World::world();
-    world.objects = vec![floor, left_wall, right_wall, middle, right, left];
+    world.objects = vec![
+        Box::new(floor),
+        // Box::new(left_wall),
+        // Box::new(right_wall),
+        Box::new(middle),
+        Box::new(right),
+        Box::new(left),
+    ];
 
     //ligth source
     let light_position = Tuple::new_point(-10.0, 10.0, -10.0);
@@ -94,8 +99,8 @@ fn main() {
     world.light_sources.push(light.clone());
 
     //camera
-    let canvas_size_pixels_width = 700;
-    let canvas_size_pixels_height = 700;
+    let canvas_size_pixels_width = 800;
+    let canvas_size_pixels_height = 800;
     let mut camera = Camera::new(
         canvas_size_pixels_width,
         canvas_size_pixels_height,

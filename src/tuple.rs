@@ -38,11 +38,11 @@ impl Sub for W {
 }
 
 impl W {
-    pub fn from_int(float: isize) -> W {
-        match float {
+    pub fn from_int(int: isize) -> W {
+        match int {
             0 => W::Vector,
             1 => W::Point,
-            _ => panic!("Tuple must be point OR vector, input w value : {}", float),
+            _ => panic!("Tuple must be point OR vector, input w value : {}", int),
         }
     }
 

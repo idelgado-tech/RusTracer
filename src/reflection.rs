@@ -1,4 +1,4 @@
-use crate::{color::*, matrix::Matrix, ray::reflect, tuple::Tuple};
+use crate::{color::*, ray::reflect, tuple::Tuple};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct PointLight {
@@ -90,7 +90,8 @@ pub fn lighting(
 
 #[cfg(test)]
 mod matrix_tests {
-    use crate::ray::Sphere;
+
+    use crate::shape::sphere::Sphere;
 
     use super::*;
 
@@ -220,11 +221,4 @@ mod matrix_tests {
         assert_eq!(result, Color::new_color(0.1, 0.1, 0.1));
     }
 
-    //     ​ 	​Scenario​: Lighting with the surface in shadow
-    // ​ 	  ​Given​ eyev ← vector(0, 0, -1)
-    // ​ 	    ​And​ normalv ← vector(0, 0, -1)
-    // ​ 	    ​And​ light ← point_light(point(0, 0, -10), color(1, 1, 1))
-    // ​ 	    ​And​ in_shadow ← true
-    // ​ 	  ​When​ result ← lighting(m, light, position, eyev, normalv, in_shadow)
-    // ​ 	  ​Then​ result = color(0.1, 0.1, 0.1)
 }
