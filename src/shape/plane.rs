@@ -32,10 +32,11 @@ impl Shape for Plane {
     }
 
     fn local_intersect(&self, local_ray: Ray) -> Vec<Intersection> {
-        if local_ray.direction.y.abs() < 0.00001 {
+        let transformed_ray = local_ray.transform(&self.transform.inverse().unwrap());
+        if transformed_ray.direction.y.abs() < 0.00001 {
             return vec![];
         } else {
-            let t = -local_ray.origin.y / local_ray.direction.y;
+            let t = -transformed_ray.origin.y / transformed_ray.direction.y;
             return vec![Intersection::new(t, Box::new(&self.clone()))];
         }
     }

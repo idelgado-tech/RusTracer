@@ -1,3 +1,5 @@
+use indicatif::{ProgressBar, ProgressStyle};
+
 use crate::{canvas::Canvas, matrix::Matrix, ray::Ray, tuple::Tuple, world::World};
 
 ///virtual camera
@@ -65,13 +67,18 @@ impl Camera {
 
     pub fn render(&self, world: World) -> Canvas {
         let mut image = Canvas::new_canvas(self.hsize, self.vsize);
+        println!("Starting render");
+        let bar = ProgressBar::new((self.hsize * self.vsize) as u64);
+        bar.set_style(ProgressStyle::with_template("{bar:120} [{percent_precise}%] [T : {elapsed:}]").unwrap());
         for y in 0..self.vsize {
             for x in 0..self.hsize {
                 let ray = self.ray_for_pixel(x, y);
                 let color = world.color_at(&ray);
                 image.set_pixel_color(x, y, color);
             }
+            bar.inc(self.hsize as u64);
         }
+        println!("Done rendering");
         image
     }
 }
@@ -163,11 +170,7 @@ mod camera_tests {
 
         assert_eq!(
             image.pixel_at(5, 5),
-            Color::new_color(
-                0.3806611930807966,
-                0.47582649135099575,
-                0.28549589481059745
-            )
+            Color::new_color(0.3806611930807966, 0.47582649135099575, 0.28549589481059745)
         );
     }
 }

@@ -11,6 +11,7 @@ mod shape;
 mod transformation;
 mod tuple;
 mod utils;
+mod pattern;
 mod world;
 
 use std::f64::consts::PI;
@@ -20,7 +21,7 @@ use color::Color;
 use minifb::{Key, Window, WindowOptions};
 use reflection::Material;
 use shape::{plane::Plane, shape::Shape, sphere::Sphere};
-use transformation::{create_scaling, create_translation, view_transform};
+use transformation::{create_rotation_x, create_scaling, create_translation, view_transform};
 use world::World;
 
 use crate::tuple::*;
@@ -37,25 +38,23 @@ fn main() {
     floor.material.color = Color::new_color(1.0, 0.9, 0.9);
     floor.material.specular = 0.0;
 
-    // //left wall
-    // let mut left_wall = Sphere::sphere();
-    // left_wall.set_transform(
-    //     &create_scaling(10.0, 0.01, 10.0)
-    //         .rotation_x(PI / 2.0)
-    //         .rotation_y(-PI / 4.0)
-    //         .translation(0.0, 0.0, 5.0),
-    // );
-    // left_wall.material = floor.material.clone();
+    //left wall
+    let mut left_wall = Plane::plane();
+    left_wall.set_transform(
+        &create_rotation_x(PI / 2.0)
+            .rotation_y(-PI / 4.0)
+            .translation(0.0, 0.0, 5.0),
+    );
+    left_wall.material = floor.material.clone();
 
-    // //rigth wall
-    // let mut right_wall = Sphere::sphere();
-    // right_wall.set_transform(
-    //     &create_scaling(10.0, 0.01, 10.0)
-    //         .rotation_x(PI / 2.0)
-    //         .rotation_y(PI / 4.0)
-    //         .translation(0.0, 0.0, 5.0),
-    // );
-    // right_wall.material = right_wall.material.clone();
+    //rigth wall
+    let mut right_wall = Plane::plane();
+    right_wall.set_transform(
+        &create_rotation_x(PI / 2.0)
+            .rotation_y(PI / 4.0)
+            .translation(0.0, 0.0, 5.0),
+    );
+    right_wall.material = right_wall.material.clone();
 
     //large sphere
     let mut middle = Sphere::sphere();
@@ -85,8 +84,8 @@ fn main() {
     let mut world = World::world();
     world.objects = vec![
         Box::new(floor),
-        // Box::new(left_wall),
-        // Box::new(right_wall),
+        Box::new(left_wall),
+        Box::new(right_wall),
         Box::new(middle),
         Box::new(right),
         Box::new(left),
@@ -99,8 +98,8 @@ fn main() {
     world.light_sources.push(light.clone());
 
     //camera
-    let canvas_size_pixels_width = 800;
-    let canvas_size_pixels_height = 800;
+    let canvas_size_pixels_width = 500;
+    let canvas_size_pixels_height = 500;
     let mut camera = Camera::new(
         canvas_size_pixels_width,
         canvas_size_pixels_height,

@@ -347,8 +347,13 @@ mod matrix_tests {
     /// The color with an intersection behind the ray
     fn color_intersection_test() {
         let mut w = World::default_world();
-        w.objects[0].get_material().ambiant = 1.0;
-        w.objects[1].get_material().ambiant = 1.0;
+        let mut wo0 = w.objects[0].get_material();
+        wo0.ambiant = 1.0;
+        w.objects[0].set_material(&wo0);
+
+        let mut wo1 = w.objects[1].get_material();
+        wo1.ambiant = 1.0;
+        w.objects[1].set_material(&wo1);
 
         let ray = Ray::new(
             Tuple::new_point(0.0, 0.0, 0.75),
