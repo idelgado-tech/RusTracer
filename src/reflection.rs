@@ -67,7 +67,7 @@ pub fn lighting(
         ambiant
     } else {
         let ligthv = (light.position.clone() - point.clone()).normalize();
-        let light_dot_normal = Tuple::dot_product(&ligthv, &normalv);
+        let light_dot_normal = Tuple::dot_product(&ligthv, normalv);
         let diffuse;
         let specular;
         if light_dot_normal < 0.0 {
@@ -75,8 +75,8 @@ pub fn lighting(
             specular = BLACK;
         } else {
             diffuse = effective_color * material.diffuse * light_dot_normal;
-            let reflectv = reflect(&(ligthv * -1.0), &normalv);
-            let reflect_dot_eye = Tuple::dot_product(&reflectv, &eyev);
+            let reflectv = reflect(&(ligthv * -1.0), normalv);
+            let reflect_dot_eye = Tuple::dot_product(&reflectv, eyev);
             if reflect_dot_eye <= 0.0 {
                 specular = BLACK;
             } else {

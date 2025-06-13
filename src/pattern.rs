@@ -1,4 +1,4 @@
-use crate::{color::Color, tuple::Tuple};
+use crate::color::Color;
 
 pub struct Pattern {
     pub color_a :Color,

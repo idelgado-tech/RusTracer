@@ -54,9 +54,9 @@ pub trait Shape {
     fn box_clone(&self) -> Box<dyn Shape>;
 
     fn get_transform(&self) -> Matrix;
-    fn set_transform(&mut self, new_stransform: &Matrix) -> ();
+    fn set_transform(&mut self, new_stransform: &Matrix);
     fn get_material(&self) -> Material;
-    fn set_material(&mut self, new_material: &Material) -> ();
+    fn set_material(&mut self, new_material: &Material);
     fn get_id(&self) -> Uuid;
 }
 
@@ -77,14 +77,14 @@ impl Shape for ShapeTest {
     }
 
     // Default implem
-    fn set_transform(&mut self, new_stransform: &Matrix) -> () {
+    fn set_transform(&mut self, new_stransform: &Matrix) {
         self.transform = new_stransform.clone();
     }
     fn get_transform(&self) -> Matrix {
         self.transform.clone()
     }
 
-    fn set_material(&mut self, new_material: &Material) -> () {
+    fn set_material(&mut self, new_material: &Material) {
         self.material = new_material.clone();
     }
     fn get_material(&self) -> Material {

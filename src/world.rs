@@ -17,7 +17,7 @@ pub struct World {
 }
 
 impl World {
-    pub fn world() -> World {
+    pub fn new_world() -> World {
         World {
             light_sources: vec![],
             objects: vec![],
@@ -64,18 +64,14 @@ impl World {
         let intersections = self.intersect_world(&r);
 
         let h = hit_intersections(intersections);
-        if h.is_some() && h.unwrap().t < distance {
-            true
-        } else {
-            false
-        }
+        h.is_some() && h.unwrap().t < distance
     }
 
     pub fn shade_hit(&self, comps: &Computation) -> Color {
         let mut shade = Color::new_color(0.0, 0.0, 0.0);
 
         for light in &self.light_sources {
-            let is_shadow = self.is_shadowed_for_light(&comps.over_point, &light);
+            let is_shadow = self.is_shadowed_for_light(&comps.over_point, light);
             shade += lighting(
                 &comps.object.get_material(),
                 light,
@@ -165,7 +161,7 @@ mod matrix_tests {
     #[test]
     ///Creating a world
     fn creation_world_test() {
-        let w = World::world();
+        let w = World::new_world();
         assert_eq!(w.objects, vec![]);
         assert_eq!(w.light_sources, vec![]);
     }
@@ -403,7 +399,7 @@ mod matrix_tests {
     #[test]
     ///shade_hit() is given an intersection in shadow
     fn shade_hits_shadow_test() {
-        let mut w = World::world();
+        let mut w = World::new_world();
         w.light_sources = vec![PointLight::new_point_light(
             Color::new_color(1.0, 1.0, 1.0),
             Tuple::new_point(0.0, 0.0, -10.0),

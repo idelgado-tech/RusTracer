@@ -1,11 +1,10 @@
-use std::ptr::null;
 
 use uuid::Uuid;
 
 use crate::ray::{Intersection, Ray};
 use crate::reflection::Material;
-use crate::tuple::{self, Tuple, W};
-use crate::{matrix::Matrix, reflection};
+use crate::tuple::{Tuple};
+use crate::matrix::Matrix;
 
 use super::shape::Shape;
 
@@ -34,22 +33,22 @@ impl Shape for Plane {
     fn local_intersect(&self, local_ray: Ray) -> Vec<Intersection> {
         let transformed_ray = local_ray.transform(&self.transform.inverse().unwrap());
         if transformed_ray.direction.y.abs() < 0.00001 {
-            return vec![];
+            vec![]
         } else {
             let t = -transformed_ray.origin.y / transformed_ray.direction.y;
-            return vec![Intersection::new(t, Box::new(&self.clone()))];
+            vec![Intersection::new(t, Box::new(&self.clone()))]
         }
     }
 
     // Default implem
-    fn set_transform(&mut self, new_stransform: &Matrix) -> () {
+    fn set_transform(&mut self, new_stransform: &Matrix) {
         self.transform = new_stransform.clone();
     }
     fn get_transform(&self) -> Matrix {
         self.transform.clone()
     }
 
-    fn set_material(&mut self, new_material: &Material) -> () {
+    fn set_material(&mut self, new_material: &Material) {
         self.material = new_material.clone();
     }
     fn get_material(&self) -> Material {

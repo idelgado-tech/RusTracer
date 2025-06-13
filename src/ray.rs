@@ -55,7 +55,7 @@ impl Intersection {
 }
 
 pub fn reflect(inv: &Tuple, normal: &Tuple) -> Tuple {
-    inv.clone() - normal.clone() * 2.0 * Tuple::dot_product(&inv, &normal)
+    inv.clone() - normal.clone() * 2.0 * Tuple::dot_product(inv, normal)
 }
 
 pub fn hit_intersections(intersections: Vec<Intersection>) -> Option<Intersection> {

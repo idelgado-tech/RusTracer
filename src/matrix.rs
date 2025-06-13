@@ -51,8 +51,8 @@ impl Mul<Tuple> for Matrix {
     type Output = Tuple;
 
     fn mul(self, other: Tuple) -> Tuple {
-        let other_as_vec = vec![other.x, other.y, other.z, W::to_int(other.w) as f64];
-        let mut tuple_tmp = vec![0.0, 0.0, 0.0, 0.0];
+        let other_as_vec = [other.x, other.y, other.z, W::to_int(other.w) as f64];
+        let mut tuple_tmp = [0.0, 0.0, 0.0, 0.0];
 
         for row in 0..self.size {
             let mut val = 0.0;
@@ -76,8 +76,8 @@ impl Mul<Tuple> for &Matrix {
     type Output = Tuple;
 
     fn mul(self, other: Tuple) -> Tuple {
-        let other_as_vec = vec![other.x, other.y, other.z, W::to_int(other.w) as f64];
-        let mut tuple_tmp = vec![0.0, 0.0, 0.0, 0.0];
+        let other_as_vec = [other.x, other.y, other.z, W::to_int(other.w) as f64];
+        let mut tuple_tmp = [0.0, 0.0, 0.0, 0.0];
 
         for row in 0..self.size {
             let mut val = 0.0;

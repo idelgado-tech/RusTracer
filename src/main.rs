@@ -3,7 +3,7 @@ mod canvas;
 mod color;
 mod error;
 mod matrix;
-mod minifb_als;
+mod drivers;
 mod ppm;
 mod ray;
 mod reflection;
@@ -18,11 +18,12 @@ use std::f64::consts::PI;
 
 use camera::Camera;
 use color::Color;
-use minifb::{Key, Window, WindowOptions};
+use minifb::Key;
 use reflection::Material;
 use shape::{plane::Plane, shape::Shape, sphere::Sphere};
 use transformation::{create_rotation_x, create_scaling, create_translation, view_transform};
 use world::World;
+use drivers::minifb_driver;
 
 use crate::tuple::*;
 
@@ -81,7 +82,7 @@ fn main() {
     left.material.specular = 0.3;
 
     //world creation
-    let mut world = World::world();
+    let mut world = World::new_world();
     world.objects = vec![
         Box::new(floor),
         Box::new(left_wall),
@@ -98,8 +99,8 @@ fn main() {
     world.light_sources.push(light.clone());
 
     //camera
-    let canvas_size_pixels_width = 500;
-    let canvas_size_pixels_height = 500;
+    let canvas_size_pixels_width = 800;
+    let canvas_size_pixels_height = 800;
     let mut camera = Camera::new(
         canvas_size_pixels_width,
         canvas_size_pixels_height,
@@ -113,8 +114,8 @@ fn main() {
 
     //render result to a canvas
     let canvas = camera.render(world);
-    let buffer = minifb_als::buffer_from_canvas(&canvas);
-    let mut window = minifb_als::new_window(&canvas);
+    let buffer = minifb_driver::buffer_from_canvas(&canvas);
+    let mut window = minifb_driver::new_window(&canvas);
 
     window
         .update_with_buffer(&buffer, canvas_size_pixels_width, canvas_size_pixels_height)

@@ -17,7 +17,7 @@ pub struct Camera {
 impl Camera {
     pub fn new(hsize: usize, vsize: usize, field_of_view: f64) -> Camera {
         let half_view = (field_of_view / 2.0).tan();
-        let aspect = (hsize as f64 / vsize as f64) as f64;
+        let aspect = (hsize as f64 / vsize as f64);
         let half_width;
         let half_height;
 
@@ -62,7 +62,7 @@ impl Camera {
         let origin = self.transformation.inverse().unwrap() * Tuple::new_point(0.0, 0.0, 0.0);
         let direction = (pixel - origin.clone()).normalize();
 
-        return Ray::new(origin, direction);
+        Ray::new(origin, direction)
     }
 
     pub fn render(&self, world: World) -> Canvas {
