@@ -20,7 +20,7 @@ impl Plane {
         Plane {
             id: Uuid::new_v4(),
             transform: Matrix::new_identity_matrix(4),
-            material: Material::material(),
+            material: Material::default_material(),
         }
     }
 }

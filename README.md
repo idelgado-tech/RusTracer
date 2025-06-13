@@ -7,8 +7,14 @@
 ## Points of interest
 
 ## chapters
-
-
+- [ ] chapter 10 : Patterns
+- [ ] chapter 11 : Reflection and Refraction
+- [ ] chapter 12 : Cubes
+- [ ] chapter 13 : Cylinders
+- [ ] chapter 14 : Groups
+- [ ] chapter 15 : Triangles
+- [ ] chapter 16 : Constructive Solid Geometry (CSG)
+- [ ] chapter 17 : Next Steps
 
 ## Possible improvements
 - [ ] End chapters

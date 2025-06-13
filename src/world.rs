@@ -31,7 +31,7 @@ impl World {
         );
 
         let mut s1 = Sphere::sphere();
-        s1.material = Material::material();
+        s1.material = Material::default_material();
         s1.material.color = Color::new_color(0.8, 1.0, 0.6);
         s1.material.diffuse = 0.7;
         s1.material.specular = 0.2;
@@ -177,7 +177,7 @@ mod matrix_tests {
         );
 
         let mut s1 = Sphere::sphere();
-        s1.material = Material::material();
+        s1.material = Material::default_material();
         s1.material.color = Color::new_color(0.8, 1.0, 0.6);
         s1.material.diffuse = 0.7;
         s1.material.specular = 0.2;

@@ -35,7 +35,7 @@ impl ShapeTest {
     fn test_shape() -> ShapeTest {
         ShapeTest {
             transform: Matrix::new_identity_matrix(4),
-            material: reflection::Material::material(),
+            material: reflection::Material::default_material(),
             id: Uuid::new_v4(),
         }
     }
@@ -165,7 +165,7 @@ mod transformation_tests {
     ///A sphere may be assigned a material
     fn test_shape_material_creation() {
         let mut s = ShapeTest::test_shape();
-        let mut material = Material::material();
+        let mut material = Material::default_material();
         material.ambiant = 1.0;
         s.material = material.clone();
         assert_eq!(s.material, material);

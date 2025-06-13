@@ -1,4 +1,9 @@
-use crate::{color::*, ray::reflect, tuple::Tuple};
+use crate::{
+    color::*,
+    pattern::{self, Pattern},
+    ray::reflect,
+    tuple::Tuple,
+};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct PointLight {
@@ -22,16 +27,18 @@ pub struct Material {
     pub diffuse: f64,
     pub specular: f64,
     pub shininess: f64,
+    pub pattern: Option<Pattern>,
 }
 
 impl Material {
-    pub fn material() -> Material {
+    pub fn default_material() -> Material {
         Material {
             color: Color::new_color(1.0, 1.0, 1.0),
             ambiant: 0.1,
             diffuse: 0.9,
             specular: 0.9,
             shininess: 200.0,
+            pattern: None,
         }
     }
 
@@ -41,6 +48,7 @@ impl Material {
         diffuse: f64,
         specular: f64,
         shininess: f64,
+        pattern: Option<Pattern>,
     ) -> Material {
         Material {
             color,
@@ -48,6 +56,7 @@ impl Material {
             diffuse,
             specular,
             shininess,
+            pattern,
         }
     }
 }
@@ -60,7 +69,11 @@ pub fn lighting(
     normalv: &Tuple,
     in_shadow: bool,
 ) -> Color {
-    let effective_color = material.color.clone() * light.intensity.clone();
+    let color = match &material.pattern {
+        Some(pattern) => pattern.color_at_point(point.clone()),
+        None => material.color,
+    };
+    let effective_color = color.clone() * light.intensity.clone();
     let ambiant = effective_color.clone() * material.ambiant;
 
     if in_shadow {
@@ -109,7 +122,7 @@ mod matrix_tests {
     #[test]
     ///The default material
     fn material_creation() {
-        let material = Material::material();
+        let material = Material::default_material();
 
         assert_eq!(material.color, Color::new_color(1.0, 1.0, 1.0));
         assert_eq!(material.ambiant, 0.1);
@@ -122,7 +135,7 @@ mod matrix_tests {
     ///A sphere may be assigned a material
     fn sphere_material_creation() {
         let mut s = Sphere::sphere();
-        let mut material = Material::material();
+        let mut material = Material::default_material();
         material.ambiant = 1.0;
         s.material = material.clone();
         assert_eq!(s.material, material);
@@ -131,7 +144,7 @@ mod matrix_tests {
     #[test]
     ///Lighting with the eye between the light and the surface
     fn lighting_1() {
-        let m = Material::material();
+        let m = Material::default_material();
         let position = Tuple::new_point(0.0, 0.0, 0.0);
 
         let eyev = Tuple::new_vector(0.0, 0.0, -1.0);
@@ -149,7 +162,7 @@ mod matrix_tests {
     #[test]
     ///Lighting with the eye between light and surface, eye offset 45°
     fn lighting_2() {
-        let m = Material::material();
+        let m = Material::default_material();
         let position = Tuple::new_point(0.0, 0.0, 0.0);
 
         let eyev = Tuple::new_vector(0.0, 2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0);
@@ -167,7 +180,7 @@ mod matrix_tests {
     #[test]
     ///Lighting with the eye between light and surface, eye offset 45°
     fn lighting_3() {
-        let m = Material::material();
+        let m = Material::default_material();
         let position = Tuple::new_point(0.0, 0.0, 0.0);
 
         let eyev = Tuple::new_vector(0.0, -2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0);
@@ -188,7 +201,7 @@ mod matrix_tests {
     #[test]
     ///Lighting with the eye between light and surface, eye offset 45°
     fn lighting_4() {
-        let m = Material::material();
+        let m = Material::default_material();
         let position = Tuple::new_point(0.0, 0.0, 0.0);
 
         let eyev = Tuple::new_vector(0.0, 0.0, -1.0);
@@ -206,7 +219,7 @@ mod matrix_tests {
     #[test]
     /// Lighting with the surface in shadow
     fn lighting_5() {
-        let m = Material::material();
+        let m = Material::default_material();
         let position = Tuple::new_point(0.0, 0.0, 0.0);
 
         let eyev = Tuple::new_vector(0.0, 0.0, -1.0);
@@ -220,5 +233,4 @@ mod matrix_tests {
         let result = lighting(&m, &light, &position, &eyev, &normalv, in_shadow);
         assert_eq!(result, Color::new_color(0.1, 0.1, 0.1));
     }
-
 }

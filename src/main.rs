@@ -35,7 +35,7 @@ fn main() {
     //floor
     let mut floor = Plane::plane();
     // floor.set_transform(&create_scaling(10.0, 0.01, 10.0));
-    floor.material = Material::material();
+    floor.material = Material::default_material();
     floor.material.color = Color::new_color(1.0, 0.9, 0.9);
     floor.material.specular = 0.0;
 
@@ -60,7 +60,7 @@ fn main() {
     //large sphere
     let mut middle = Sphere::sphere();
     middle.set_transform(&create_translation(-0.5, 1.0, 0.5));
-    middle.material = Material::material();
+    middle.material = Material::default_material();
     middle.material.color = Color::new_color(0.1, 1.0, 0.5);
     middle.material.diffuse = 0.7;
     middle.material.specular = 0.3;
@@ -68,7 +68,7 @@ fn main() {
     //small sphere
     let mut right = Sphere::sphere();
     right.set_transform(&create_scaling(0.5, 0.5, 0.5).translation(1.5, 0.5, -0.5));
-    right.material = Material::material();
+    right.material = Material::default_material();
     right.material.color = Color::new_color(0.5, 1.0, 0.1);
     right.material.diffuse = 0.7;
     right.material.specular = 0.3;
@@ -76,7 +76,7 @@ fn main() {
     //smaller sphere
     let mut left = Sphere::sphere();
     left.set_transform(&create_scaling(0.33, 0.33, 0.33).translation(-1.5, 0.33, -0.75));
-    left.material = Material::material();
+    left.material = Material::default_material();
     left.material.color = Color::new_color(1.0, 0.8, 0.1);
     left.material.diffuse = 0.7;
     left.material.specular = 0.3;
