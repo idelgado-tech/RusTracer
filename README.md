@@ -18,6 +18,7 @@
 
 ## Possible improvements
 - [ ] End chapters
+- [ ] Benchmarks
 - [ ] Parallelization with [rayon](https://github.com/rayon-rs/rayon)
 - [ ] cache Matrices inversion
 - [ ]  Avoid creating a new vec for each call to a shape intersects() method using a kind of closure (it should provides an interesting speedup as it prevents the dynamic allocation of many temporaries)

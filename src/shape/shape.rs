@@ -3,10 +3,7 @@ use std::fmt::{Debug, Formatter};
 use crate::ray::{Intersection, Ray};
 use crate::{matrix::Matrix, reflection};
 
-use crate::{
-    reflection::Material,
-    tuple::*,
-};
+use crate::{reflection::Material, tuple::*};
 use uuid::Uuid;
 
 static mut SAVED_RAY: Ray = Ray {
@@ -45,14 +42,12 @@ pub trait Shape {
     fn local_intersect(&self, local_ray: Ray) -> Vec<Intersection>;
     fn intersect(&self, ray: Ray) -> Vec<Intersection> {
         self.local_intersect(ray)
-    } //remove MUT
-
+    }
     fn local_normal_at(&self, point: Tuple) -> Tuple;
     fn normal_at(&self, point: Tuple) -> Tuple {
         self.local_normal_at(point)
     }
     fn box_clone(&self) -> Box<dyn Shape>;
-
     fn get_transform(&self) -> Matrix;
     fn set_transform(&mut self, new_stransform: &Matrix);
     fn get_material(&self) -> Material;

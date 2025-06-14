@@ -1,8 +1,5 @@
 use crate::{
-    color::*,
-    pattern::{self, Pattern},
-    ray::reflect,
-    tuple::Tuple,
+    color::*, pattern::{self, Pattern}, ray::reflect, shape::shape::Shape, tuple::Tuple
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -68,9 +65,10 @@ pub fn lighting(
     eyev: &Tuple,
     normalv: &Tuple,
     in_shadow: bool,
+    object :&Box<dyn Shape>
 ) -> Color {
     let color = match &material.pattern {
-        Some(pattern) => pattern.color_at_point(point.clone()),
+        Some(pattern) => pattern.color_at_object(&object,point.clone()),
         None => material.color,
     };
     let effective_color = color.clone() * light.intensity.clone();
@@ -155,7 +153,9 @@ mod matrix_tests {
         );
         let in_shadow = false;
 
-        let result = lighting(&m, &light, &position, &eyev, &normalv, in_shadow);
+        let result = lighting(&m, &light, &position, &eyev, &normalv, in_shadow,
+            &Sphere::sphere().box_clone().into(),
+        );
         assert_eq!(result, Color::new_color(1.9, 1.9, 1.9));
     }
 
@@ -173,7 +173,7 @@ mod matrix_tests {
         );
         let in_shadow = false;
 
-        let result = lighting(&m, &light, &position, &eyev, &normalv, in_shadow);
+        let result = lighting(&m, &light, &position, &eyev, &normalv, in_shadow,&Sphere::sphere().box_clone().into(),);
         assert_eq!(result, Color::new_color(1.0, 1.0, 1.0));
     }
 
@@ -191,7 +191,7 @@ mod matrix_tests {
         );
         let in_shadow = false;
 
-        let result = lighting(&m, &light, &position, &eyev, &normalv, in_shadow);
+        let result = lighting(&m, &light, &position, &eyev, &normalv, in_shadow,&Sphere::sphere().box_clone().into(),);
         assert_eq!(
             result,
             Color::new_color(1.6363961030678928, 1.6363961030678928, 1.6363961030678928)
@@ -212,7 +212,7 @@ mod matrix_tests {
         );
         let in_shadow = false;
 
-        let result = lighting(&m, &light, &position, &eyev, &normalv, in_shadow);
+        let result = lighting(&m, &light, &position, &eyev, &normalv, in_shadow,&Sphere::sphere().box_clone().into(),);
         assert_eq!(result, Color::new_color(0.1, 0.1, 0.1));
     }
 
@@ -230,7 +230,7 @@ mod matrix_tests {
         );
         let in_shadow = true;
 
-        let result = lighting(&m, &light, &position, &eyev, &normalv, in_shadow);
+        let result = lighting(&m, &light, &position, &eyev, &normalv, in_shadow,&Sphere::sphere().box_clone().into(),);
         assert_eq!(result, Color::new_color(0.1, 0.1, 0.1));
     }
 }

@@ -79,6 +79,7 @@ impl World {
                 &comps.eyev,
                 &comps.normalv,
                 is_shadow,
+                &comps.object.clone()
             );
         }
         shade
