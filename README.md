@@ -7,7 +7,7 @@
 ## Points of interest
 
 ## chapters
-- [ ] chapter 10 : Patterns
+- [X] chapter 10 : Patterns
 - [ ] chapter 11 : Reflection and Refraction
 - [ ] chapter 12 : Cubes
 - [ ] chapter 13 : Cylinders
@@ -21,7 +21,7 @@
 - [ ] Benchmarks
 - [ ] Parallelization with [rayon](https://github.com/rayon-rs/rayon)
 - [ ] cache Matrices inversion
-- [ ]  Avoid creating a new vec for each call to a shape intersects() method using a kind of closure (it should provides an interesting speedup as it prevents the dynamic allocation of many temporaries)
+- [ ] Avoid creating a new vec for each call to a shape intersects() method using a kind of closure (it should provides an interesting speedup as it prevents the dynamic allocation of many temporaries)
 - [ ] Anti-aliasing
 - [ ] Separate Tests from code for readability
 - [ ] File config for scenes

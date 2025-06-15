@@ -1,4 +1,9 @@
-use crate::{color::Color, matrix::Matrix, shape::shape::Shape, tuple::Tuple};
+use crate::{
+    color::{self, Color},
+    matrix::Matrix,
+    shape::shape::Shape,
+    tuple::Tuple,
+};
 use std::rc::Rc;
 
 #[derive(Clone)]
@@ -54,6 +59,59 @@ impl Pattern {
         Pattern::new(color_a, color_b, fonction)
     }
 
+    pub fn new_test_pattern() -> Pattern {
+        let fonction =
+            |_pattern: &Pattern, point: Tuple| Color::new_color(point.x, point.y, point.z);
+
+        Pattern::new(color::WHITE, color::BLACK, fonction)
+    }
+
+    pub fn new_gradiant_pattern(color_a: Color, color_b: Color) -> Pattern {
+        let fonction = |pattern: &Pattern, point: Tuple| {
+            let distance = pattern.color_b - pattern.color_a;
+            let fraction = point.x - point.x.floor();
+            pattern.color_a + distance * fraction
+        };
+
+        Pattern::new(color_a, color_b, fonction)
+    }
+
+    pub fn new_radial_gradiant_pattern(color_a: Color, color_b: Color) -> Pattern { //  a tester
+        let fonction = |pattern: &Pattern, point: Tuple| {
+            let distance = pattern.color_b - pattern.color_a;
+            let fraction = point.x - point.x.floor();
+            pattern.color_a + distance * fraction
+        };
+
+        Pattern::new(color_a, color_b, fonction)
+    }
+
+    pub fn new_ring_pattern(color_a: Color, color_b: Color) -> Pattern {
+        let fonction = |pattern: &Pattern, point: Tuple| {
+            let square = (point.x.powi(2) + point.z.powi(2)).sqrt();
+            if square.floor() % 2.0 == 0.0 {
+                pattern.get_color_a()
+            } else {
+                pattern.get_color_b()
+            }
+        };
+
+        Pattern::new(color_a, color_b, fonction)
+    }
+
+    pub fn new_checker_pattern(color_a: Color, color_b: Color) -> Pattern {
+        // Make it sphere friendly
+        let fonction = |pattern: &Pattern, point: Tuple| {
+            if (point.x.floor() + point.y.floor() + point.z.floor()) % 2.0 == 0.0 {
+                pattern.get_color_a()
+            } else {
+                pattern.get_color_b()
+            }
+        };
+
+        Pattern::new(color_a, color_b, fonction)
+    }
+
     pub fn get_transform(&self) -> Matrix {
         self.transformation_matrix.clone()
     }
@@ -88,7 +146,7 @@ impl Pattern {
 #[cfg(test)]
 mod matrix_tests {
     use crate::{
-        color, matrix,
+        color::{self, BLACK, WHITE},
         reflection::{self, Material, PointLight},
         shape::{shape::Shape, sphere::Sphere},
         transformation,
@@ -241,5 +299,162 @@ mod matrix_tests {
         let c = pattern.color_at_object(&object, Tuple::new_point(1.5, 0.0, 0.0));
 
         assert_eq!(c, color::WHITE);
+    }
+
+    #[test]
+    // Scenario: The default pattern transformation
+    fn default_test_pattern() {
+        let pattern = Pattern::new_test_pattern();
+        assert_eq!(pattern.get_transform(), Matrix::new_identity_matrix(4));
+    }
+
+    #[test]
+    // Scenario: Assigning a transformation
+    fn assigning_transformation_test() {
+        let mut pattern = Pattern::new_test_pattern();
+        pattern.set_transform(&transformation::create_translation(1.0, 2.0, 3.0));
+        assert_eq!(
+            pattern.get_transform(),
+            transformation::create_translation(1.0, 2.0, 3.0)
+        );
+    }
+
+    #[test]
+    // Scenario: A pattern with an object transformation
+    fn pattern_transformation_test() {
+        let mut object = Sphere::sphere().box_clone().to_owned();
+        object.set_transform(&transformation::create_scaling(2.0, 2.0, 2.0));
+        let pattern = Pattern::new_test_pattern();
+        let c = pattern.color_at_object(&object, Tuple::new_point(2.0, 3.0, 4.0));
+
+        assert_eq!(c, Color::new_color(1.0, 1.5, 2.0));
+    }
+
+    #[test]
+    // Scenario: A pattern with a pattern transformation
+    fn pattern_transformation_test_2() {
+        let object = Sphere::sphere().box_clone().to_owned();
+        let mut pattern = Pattern::new_test_pattern();
+        pattern.set_transform(&transformation::create_scaling(2.0, 2.0, 2.0));
+        let c = pattern.color_at_object(&object, Tuple::new_point(2.0, 3.0, 4.0));
+
+        assert_eq!(c, Color::new_color(1.0, 1.5, 2.0));
+    }
+
+    #[test]
+    // Scenario: A pattern with both an object and a pattern transformation
+    fn pattern_transformation_test_3() {
+        let mut object = Sphere::sphere().box_clone().to_owned();
+        object.set_transform(&transformation::create_scaling(2.0, 2.0, 2.0));
+
+        let mut pattern = Pattern::new_test_pattern();
+        pattern.set_transform(&transformation::create_translation(0.5, 1.0, 1.5));
+
+        let c = pattern.color_at_object(&object, Tuple::new_point(2.5, 3.0, 3.5));
+
+        assert_eq!(c, Color::new_color(0.75, 0.5, 0.25));
+    }
+
+    #[test]
+    // Scenario: A gradient linearly interpolates between colors
+    fn gradiant_pattern_test() {
+        let pattern = Pattern::new_gradiant_pattern(WHITE, BLACK);
+
+        assert_eq!(
+            pattern.color_at_point(Tuple::new_point(0.0, 0.0, 0.0)),
+            WHITE
+        );
+        assert_eq!(
+            pattern.color_at_point(Tuple::new_point(0.25, 0.0, 0.0)),
+            Color::new_color(0.75, 0.75, 0.75)
+        );
+        assert_eq!(
+            pattern.color_at_point(Tuple::new_point(0.5, 0.0, 0.0)),
+            Color::new_color(0.5, 0.5, 0.5)
+        );
+        assert_eq!(
+            pattern.color_at_point(Tuple::new_point(0.75, 0.0, 0.0)),
+            Color::new_color(0.25, 0.25, 0.25)
+        );
+    }
+
+    #[test]
+    // Scenario: A ring should extend in both x and z
+    fn ring_pattern_test() {
+        let pattern = Pattern::new_ring_pattern(WHITE, BLACK);
+
+        assert_eq!(
+            pattern.color_at_point(Tuple::new_point(0.0, 0.0, 0.0)),
+            WHITE
+        );
+        assert_eq!(
+            pattern.color_at_point(Tuple::new_point(1.0, 0.0, 0.0)),
+            BLACK
+        );
+        assert_eq!(
+            pattern.color_at_point(Tuple::new_point(0.0, 0.0, 1.0)),
+            BLACK
+        );
+        assert_eq!(
+            pattern.color_at_point(Tuple::new_point(0.708, 0.0, 0.708)),
+            BLACK
+        );
+    }
+
+    #[test]
+    // Scenario: Checkers should repeat in x
+    fn checker_pattern_test_x() {
+        let pattern = Pattern::new_checker_pattern(WHITE, BLACK);
+
+        assert_eq!(
+            pattern.color_at_point(Tuple::new_point(0.0, 0.0, 0.0)),
+            WHITE
+        );
+        assert_eq!(
+            pattern.color_at_point(Tuple::new_point(0.99, 0.0, 0.0)),
+            WHITE
+        );
+        assert_eq!(
+            pattern.color_at_point(Tuple::new_point(1.01, 0.0, 0.0)),
+            BLACK
+        );
+    }
+
+    #[test]
+    // Scenario: Checkers should repeat in x
+    fn checker_pattern_test_y() {
+        let pattern = Pattern::new_checker_pattern(WHITE, BLACK);
+
+        assert_eq!(
+            pattern.color_at_point(Tuple::new_point(0.0, 0.0, 0.0)),
+            WHITE
+        );
+        assert_eq!(
+            pattern.color_at_point(Tuple::new_point(0.0, 0.99, 0.0)),
+            WHITE
+        );
+        assert_eq!(
+            pattern.color_at_point(Tuple::new_point(0.0, 1.01, 0.0)),
+            BLACK
+        );
+    }
+
+    #[test]
+    // Scenario: Checkers should repeat in x
+    fn checker_pattern_test_z() {
+        let pattern = Pattern::new_checker_pattern(WHITE, BLACK);
+
+        assert_eq!(
+            pattern.color_at_point(Tuple::new_point(0.0, 0.0, 0.0)),
+            WHITE
+        );
+        assert_eq!(
+            pattern.color_at_point(Tuple::new_point(0.0, 0.0, 0.99)),
+            WHITE
+        );
+        assert_eq!(
+            pattern.color_at_point(Tuple::new_point(0.0, 0.0, 1.01)),
+            BLACK
+        );
     }
 }

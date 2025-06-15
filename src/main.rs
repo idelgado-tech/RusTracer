@@ -25,7 +25,7 @@ use transformation::{create_rotation_x, create_scaling, create_translation, view
 use world::World;
 use drivers::minifb_driver;
 
-use crate::tuple::*;
+use crate::{color::{BLACK, WHITE}, pattern::Pattern, tuple::*};
 
 // TODO
 // Better Unwrap
@@ -34,7 +34,6 @@ use crate::tuple::*;
 fn main() {
     //floor
     let mut floor = Plane::plane();
-    // floor.set_transform(&create_scaling(10.0, 0.01, 10.0));
     floor.material = Material::default_material();
     floor.material.color = Color::new_color(1.0, 0.9, 0.9);
     floor.material.specular = 0.0;
@@ -47,6 +46,8 @@ fn main() {
             .translation(0.0, 0.0, 5.0),
     );
     left_wall.material = floor.material.clone();
+    floor.material.pattern = Some(Pattern::new_checker_pattern(WHITE, BLACK));
+
 
     //rigth wall
     let mut right_wall = Plane::plane();
@@ -64,6 +65,7 @@ fn main() {
     middle.material.color = Color::new_color(0.1, 1.0, 0.5);
     middle.material.diffuse = 0.7;
     middle.material.specular = 0.3;
+    middle.material.pattern = Some (Pattern::new_checker_pattern(color::AZURE_BLUE, color::WHITE));
 
     //small sphere
     let mut right = Sphere::sphere();
@@ -72,6 +74,7 @@ fn main() {
     right.material.color = Color::new_color(0.5, 1.0, 0.1);
     right.material.diffuse = 0.7;
     right.material.specular = 0.3;
+    right.material.pattern = Some (Pattern::new_stripe_pattern(color::AZURE_BLUE, color::LIGHT_VIOLET));
 
     //smaller sphere
     let mut left = Sphere::sphere();
@@ -99,8 +102,8 @@ fn main() {
     world.light_sources.push(light.clone());
 
     //camera
-    let canvas_size_pixels_width = 800;
-    let canvas_size_pixels_height = 800;
+    let canvas_size_pixels_width = 500;
+    let canvas_size_pixels_height = 500;
     let mut camera = Camera::new(
         canvas_size_pixels_width,
         canvas_size_pixels_height,
