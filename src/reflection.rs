@@ -1,5 +1,9 @@
 use crate::{
-    color::*, pattern::{self, Pattern}, ray::reflect, shape::shape::Shape, tuple::Tuple
+    color::*,
+    pattern::{self, Pattern},
+    ray::reflect,
+    shape::shape::Shape,
+    tuple::Tuple,
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -25,6 +29,7 @@ pub struct Material {
     pub specular: f64,
     pub shininess: f64,
     pub pattern: Option<Pattern>,
+    pub reflective: f64,
 }
 
 impl Material {
@@ -36,6 +41,7 @@ impl Material {
             specular: 0.9,
             shininess: 200.0,
             pattern: None,
+            reflective: 0.0,
         }
     }
 
@@ -45,6 +51,7 @@ impl Material {
         diffuse: f64,
         specular: f64,
         shininess: f64,
+        reflective: f64,
         pattern: Option<Pattern>,
     ) -> Material {
         Material {
@@ -54,6 +61,7 @@ impl Material {
             specular,
             shininess,
             pattern,
+            reflective,
         }
     }
 }
@@ -65,10 +73,10 @@ pub fn lighting(
     eyev: &Tuple,
     normalv: &Tuple,
     in_shadow: bool,
-    object :&Box<dyn Shape>
+    object: &Box<dyn Shape>,
 ) -> Color {
     let color = match &material.pattern {
-        Some(pattern) => pattern.color_at_object(&object,point.clone()),
+        Some(pattern) => pattern.color_at_object(&object, point.clone()),
         None => material.color,
     };
     let effective_color = color.clone() * light.intensity.clone();
@@ -101,8 +109,11 @@ pub fn lighting(
 
 #[cfg(test)]
 mod matrix_tests {
-
-    use crate::shape::sphere::Sphere;
+    use crate::{
+        ray::{Intersection, Ray},
+        shape::{plane::Plane, sphere::Sphere},
+        world::prepare_computations,
+    };
 
     use super::*;
 
@@ -153,7 +164,13 @@ mod matrix_tests {
         );
         let in_shadow = false;
 
-        let result = lighting(&m, &light, &position, &eyev, &normalv, in_shadow,
+        let result = lighting(
+            &m,
+            &light,
+            &position,
+            &eyev,
+            &normalv,
+            in_shadow,
             &Sphere::sphere().box_clone().into(),
         );
         assert_eq!(result, Color::new_color(1.9, 1.9, 1.9));
@@ -173,7 +190,15 @@ mod matrix_tests {
         );
         let in_shadow = false;
 
-        let result = lighting(&m, &light, &position, &eyev, &normalv, in_shadow,&Sphere::sphere().box_clone().into(),);
+        let result = lighting(
+            &m,
+            &light,
+            &position,
+            &eyev,
+            &normalv,
+            in_shadow,
+            &Sphere::sphere().box_clone().into(),
+        );
         assert_eq!(result, Color::new_color(1.0, 1.0, 1.0));
     }
 
@@ -191,7 +216,15 @@ mod matrix_tests {
         );
         let in_shadow = false;
 
-        let result = lighting(&m, &light, &position, &eyev, &normalv, in_shadow,&Sphere::sphere().box_clone().into(),);
+        let result = lighting(
+            &m,
+            &light,
+            &position,
+            &eyev,
+            &normalv,
+            in_shadow,
+            &Sphere::sphere().box_clone().into(),
+        );
         assert_eq!(
             result,
             Color::new_color(1.6363961030678928, 1.6363961030678928, 1.6363961030678928)
@@ -212,7 +245,15 @@ mod matrix_tests {
         );
         let in_shadow = false;
 
-        let result = lighting(&m, &light, &position, &eyev, &normalv, in_shadow,&Sphere::sphere().box_clone().into(),);
+        let result = lighting(
+            &m,
+            &light,
+            &position,
+            &eyev,
+            &normalv,
+            in_shadow,
+            &Sphere::sphere().box_clone().into(),
+        );
         assert_eq!(result, Color::new_color(0.1, 0.1, 0.1));
     }
 
@@ -230,7 +271,38 @@ mod matrix_tests {
         );
         let in_shadow = true;
 
-        let result = lighting(&m, &light, &position, &eyev, &normalv, in_shadow,&Sphere::sphere().box_clone().into(),);
+        let result = lighting(
+            &m,
+            &light,
+            &position,
+            &eyev,
+            &normalv,
+            in_shadow,
+            &Sphere::sphere().box_clone().into(),
+        );
         assert_eq!(result, Color::new_color(0.1, 0.1, 0.1));
+    }
+
+    #[test]
+    //Scenario : Reflectivity for the default material
+    fn reflection_test() {
+        let material = Material::default_material();
+        assert_eq!(material.reflective, 0.0);
+    }
+
+    #[test]
+    //Scenario: Precomputing the reflection vector
+    fn reflection_precompute_test() {
+        let shape = Plane::plane();
+        let r = Ray::new(
+            Tuple::new_point(0.0, 1.0, -1.0),
+            Tuple::new_vector(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0),
+        );
+        let i = Intersection::new(2.0_f64.sqrt(), Box::new(&shape));
+        let comps = prepare_computations(&i, &r);
+        assert_eq!(
+            comps.reflectv,
+            Tuple::new_vector(0.0, 2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0)
+        );
     }
 }

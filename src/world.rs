@@ -1,9 +1,8 @@
 use crate::{
     color::{self, Color},
-    ray::{hit_intersections, Intersection, Ray},
+    ray::{hit_intersections, reflect, Intersection, Ray},
     reflection::{lighting, Material, PointLight},
-    shape::shape::Shape,
-    shape::sphere::Sphere,
+    shape::{shape::Shape, sphere::Sphere},
     transformation,
     tuple::Tuple,
 };
@@ -79,7 +78,7 @@ impl World {
                 &comps.eyev,
                 &comps.normalv,
                 is_shadow,
-                &comps.object.clone()
+                &comps.object.clone(),
             );
         }
         shade
@@ -105,6 +104,7 @@ pub struct Computation {
     pub eyev: Tuple,
     pub normalv: Tuple,
     pub inside: bool,
+    pub reflectv: Tuple,
 }
 
 impl PartialEq for Computation {
@@ -116,6 +116,7 @@ impl PartialEq for Computation {
             && self.eyev == other.eyev
             && self.normalv == other.normalv
             && self.inside == other.inside
+            && self.reflectv == other.reflectv
     }
 }
 
@@ -129,6 +130,7 @@ impl Computation {
             eyev: Tuple::new_vector(0.0, 0.0, 0.0),
             normalv: Tuple::new_vector(0.0, 0.0, 0.0),
             inside: true,
+            reflectv: Tuple::new_vector(0.0, 0.0, 0.0),
         }
     }
 }
@@ -141,6 +143,7 @@ pub fn prepare_computations(intersection: &Intersection, ray: &Ray) -> Computati
     comps.point = ray.position(comps.t);
     comps.eyev = ray.direction.clone() * -1.0;
     comps.normalv = comps.object.normal_at(comps.point.clone());
+    comps.reflectv = reflect(&ray.direction.clone(), &comps.normalv);
 
     if Tuple::dot_product(&comps.normalv, &comps.eyev) < 0.0 {
         comps.inside = true;

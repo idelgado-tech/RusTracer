@@ -57,6 +57,7 @@ fn main() {
             .translation(0.0, 0.0, 5.0),
     );
     right_wall.material = right_wall.material.clone();
+    right_wall.material.pattern = Some (Pattern::new_radial_gradiant_pattern(color::BLACK, color::WHITE));
 
     //large sphere
     let mut middle = Sphere::sphere();
