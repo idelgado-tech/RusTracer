@@ -103,12 +103,12 @@ fn main() {
     world.light_sources.push(light.clone());
 
     //camera
-    let canvas_size_pixels_width = 500;
-    let canvas_size_pixels_height = 500;
+    let canvas_size_pixels_width = 1900;
+    let canvas_size_pixels_height = 1080;
     let mut camera = Camera::new(
         canvas_size_pixels_width,
         canvas_size_pixels_height,
-        PI / 3.0,
+        PI / 2.0,
     );
     camera.transformation = view_transform(
         &Tuple::new_point(0.0, 1.5, -5.0),
@@ -117,7 +117,7 @@ fn main() {
     );
 
     //render result to a canvas
-    let canvas = camera.render(world);
+    let canvas = camera.render_with_update_bar(world);
     let buffer = minifb_driver::buffer_from_canvas(&canvas);
     let mut window = minifb_driver::new_window(&canvas);
 

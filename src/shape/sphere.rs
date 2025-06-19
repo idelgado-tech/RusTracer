@@ -51,8 +51,8 @@ impl Shape for Sphere {
             let t1 = (-b - discriminant.sqrt()) / (2.0 * a);
             let t2 = (-b + discriminant.sqrt()) / (2.0 * a);
             vec![
-                Intersection::new(t1, Box::new(self)),
-                Intersection::new(t2, Box::new(self)),
+                Intersection::new(t1, self.box_clone()),
+                Intersection::new(t2, self.box_clone()),
             ]
         }
     }

@@ -36,7 +36,7 @@ impl Shape for Plane {
             vec![]
         } else {
             let t = -transformed_ray.origin.y / transformed_ray.direction.y;
-            vec![Intersection::new(t, Box::new(&self.clone()))]
+            vec![Intersection::new(t, self.box_clone())]
         }
     }
 

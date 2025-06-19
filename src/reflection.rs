@@ -112,7 +112,8 @@ mod matrix_tests {
     use crate::{
         ray::{Intersection, Ray},
         shape::{plane::Plane, sphere::Sphere},
-        world::prepare_computations,
+        transformation,
+        world::{prepare_computations, World},
     };
 
     use super::*;
@@ -298,11 +299,61 @@ mod matrix_tests {
             Tuple::new_point(0.0, 1.0, -1.0),
             Tuple::new_vector(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0),
         );
-        let i = Intersection::new(2.0_f64.sqrt(), Box::new(&shape));
+        let i = Intersection::new(2.0_f64.sqrt(), Box::new(shape));
         let comps = prepare_computations(&i, &r);
         assert_eq!(
             comps.reflectv,
             Tuple::new_vector(0.0, 2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0)
         );
+    }
+
+    #[test]
+    //Scenario: The reflected color for a nonreflective material
+    fn reflection_nonreflective_test() {
+        let w = World::default_world();
+
+        let r = Ray::new(
+            Tuple::new_point(0.0, 0.0, 0.0),
+            Tuple::new_vector(0.0, 0.0, 1.0),
+        );
+
+        let shape = w.objects[1].clone();
+        shape.get_material().ambiant = 1.0;
+        let i = Intersection::new(1.0, shape);
+
+        let comps = prepare_computations(&i, &r);
+        let color = w.reflected_color(comps);
+        assert_eq!(color, Color::new_color(0.0, 0.0, 0.0));
+    }
+
+    // And r ← ray(point(0, 0, -3), vector(0, -√2/2, √2/2))
+    // And i ← intersection(√2, shape)
+    // When comps ← prepare_computations(i, r)
+    // And color ← reflected_color(w, comps)
+    // Then color = color(0.19032, 0.2379, 0.14274)
+
+    #[test]
+    //Scenario: The reflected color for a reflective material
+    fn reflection_reflective_test() {
+        let mut w = World::default_world();
+        let mut shape = Plane::plane();
+        shape.get_material().reflective = 0.5;
+        shape.set_transform(&transformation::create_translation(0.0, -1.0, 0.0));
+        w.add_object(shape.box_clone());
+
+        let r = Ray::new(
+            Tuple::new_point(0.0, 0.0, -3.0),
+            Tuple::new_vector(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0),
+        );
+
+        let i = Intersection::new(2.0_f64.sqrt(), w.objects.last().unwrap().to_owned());
+
+        
+        let comps = prepare_computations(&i, &r);
+        println!("comps {:?}",comps.clone());
+        let color = w.reflected_color(comps);
+        
+
+        assert_eq!(color, Color::new_color(0.19032, 0.2379, 0.14274));
     }
 }

@@ -93,6 +93,21 @@ impl World {
         let comps = prepare_computations(&intersections[0], ray);
         self.shade_hit(&comps)
     }
+
+    pub fn reflected_color(&self, comps: Computation) -> Color {
+
+        if comps.object.get_material().reflective == 0.0 {
+           return color::BLACK;
+        }
+        let reflect_ray = Ray::new(comps.over_point, comps.reflectv);
+        let ref_color = self.color_at(&reflect_ray);
+
+        ref_color * comps.object.get_material().reflective
+    }
+
+    pub fn add_object(&mut self, obj: Box<dyn Shape>) {
+        self.objects.push(obj);
+    }
 }
 
 #[derive(Debug, Clone)]
