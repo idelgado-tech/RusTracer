@@ -45,7 +45,7 @@ fn main() {
             .rotation_y(-PI / 4.0)
             .translation(0.0, 0.0, 5.0),
     );
-    left_wall.material = floor.material.clone();
+    left_wall.material = floor.material.set_reflective(0.8).clone();
     floor.material.pattern = Some(Pattern::new_checker_pattern(WHITE, BLACK));
 
 
@@ -56,7 +56,7 @@ fn main() {
             .rotation_y(PI / 4.0)
             .translation(0.0, 0.0, 5.0),
     );
-    right_wall.material = right_wall.material.clone();
+    right_wall.material = right_wall.material.set_reflective(0.9).clone();
     right_wall.material.pattern = Some (Pattern::new_radial_gradiant_pattern(color::BLACK, color::WHITE));
 
     //large sphere
@@ -103,8 +103,8 @@ fn main() {
     world.light_sources.push(light.clone());
 
     //camera
-    let canvas_size_pixels_width = 1900;
-    let canvas_size_pixels_height = 1080;
+    let canvas_size_pixels_width = 500;
+    let canvas_size_pixels_height = 500;
     let mut camera = Camera::new(
         canvas_size_pixels_width,
         canvas_size_pixels_height,

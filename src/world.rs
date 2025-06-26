@@ -80,6 +80,7 @@ impl World {
                 is_shadow,
                 &comps.object.clone(),
             );
+            shade += self.reflected_color(comps.clone());
         }
         shade
     }
