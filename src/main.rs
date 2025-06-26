@@ -62,7 +62,7 @@ fn main() {
     //large sphere
     let mut middle = Sphere::sphere();
     middle.set_transform(&create_translation(-0.5, 1.0, 0.5));
-    middle.material = Material::default_material();
+    middle.material = Material::default_material().set_reflective(1.0).clone();
     middle.material.color = Color::new_color(0.1, 1.0, 0.5);
     middle.material.diffuse = 0.7;
     middle.material.specular = 0.3;
@@ -103,8 +103,8 @@ fn main() {
     world.light_sources.push(light.clone());
 
     //camera
-    let canvas_size_pixels_width = 500;
-    let canvas_size_pixels_height = 500;
+    let canvas_size_pixels_width = 1500;
+    let canvas_size_pixels_height = 1000;
     let mut camera = Camera::new(
         canvas_size_pixels_width,
         canvas_size_pixels_height,

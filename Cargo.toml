@@ -1,7 +1,7 @@
 [package]
 name = "rustracer"
 version = "0.5.0"
-edition = "2018"
+edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 # on ubuntu linux we may need to point the path of xkbcommon.pc to pkgconfig

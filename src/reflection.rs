@@ -6,6 +6,8 @@ use crate::{
     tuple::Tuple,
 };
 
+pub const MAX_RECURTION: usize = 5;
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct PointLight {
     pub intensity: Color,
@@ -118,7 +120,7 @@ mod matrix_tests {
         ray::{Intersection, Ray},
         shape::{plane::Plane, sphere::Sphere},
         transformation,
-        world::{prepare_computations, World},
+        world::{World, prepare_computations},
     };
 
     use super::*;
@@ -327,7 +329,7 @@ mod matrix_tests {
         let i = Intersection::new(1.0, shape);
 
         let comps = prepare_computations(&i, &r);
-        let color = w.reflected_color(comps);
+        let color = w.reflected_color(comps, MAX_RECURTION);
         assert_eq!(color, Color::new_color(0.0, 0.0, 0.0));
     }
 
@@ -348,7 +350,7 @@ mod matrix_tests {
         let i = Intersection::new(2.0_f64.sqrt(), w.objects.last().unwrap().to_owned());
 
         let comps = prepare_computations(&i, &r);
-        let color = w.reflected_color(comps);
+        let color = w.reflected_color(comps, MAX_RECURTION);
 
         assert_eq!(
             color.normalise(),
@@ -373,7 +375,7 @@ mod matrix_tests {
         let i = Intersection::new(2.0_f64.sqrt(), w.objects.last().unwrap().to_owned());
 
         let comps = prepare_computations(&i, &r);
-        let color = w.shade_hit(&comps);
+        let color = w.shade_hit(&comps, MAX_RECURTION);
 
         assert_eq!(
             color.normalise(),
@@ -405,11 +407,34 @@ mod matrix_tests {
             Tuple::new_vector(0.0, 1.0, 0.0),
         );
 
-        let color = w.color_at(&r);
+        let color = w.color_at(&r, MAX_RECURTION);
 
         assert_eq!(
             color.normalise(),
-            Color::new_color(1.0    , 1.0, 1.0).normalise()
+            Color::new_color(1.0, 1.0, 1.0).normalise()
         );
+    }
+
+    #[test]
+    //Scenario: color_at() with mutually reflective surfaces
+    fn reflection_infinite_max_recursion_test() {
+        let mut w = World::default_world();
+
+        let mut shape = Plane::plane();
+        shape.set_material(shape.get_material().set_reflective(0.5));
+        shape.set_transform(&transformation::create_translation(0.0, -1.0, 0.0));
+        w.add_object(shape.box_clone());
+
+        let r = Ray::new(
+            Tuple::new_point(0.0, 0.0, -3.0),
+            Tuple::new_vector(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0),
+        );
+
+        let i = Intersection::new(2.0_f64.sqrt(), w.objects.last().unwrap().to_owned());
+
+        let comps = prepare_computations(&i, &r);
+        let color = w.reflected_color(comps, 0);
+
+        assert_eq!(color, BLACK);
     }
 }

@@ -37,7 +37,7 @@ impl Shape for Sphere {
         world_normal.normalize()
     }
 
-    fn local_intersect(&self, local_ray: Ray) -> Vec<Intersection> {
+    fn local_intersect(& mut self, local_ray: Ray) -> Vec<Intersection> {
         let transformed_ray = local_ray.transform(&self.transform.inverse().unwrap());
         let sphere_to_ray = transformed_ray.origin - self.clone().origin;
         let a = Tuple::dot_product(&transformed_ray.direction, &transformed_ray.direction);

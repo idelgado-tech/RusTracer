@@ -26,6 +26,7 @@ pub struct ShapeTest {
     pub transform: Matrix,
     pub material: Material,
     pub id: Uuid,
+    pub saved_ray: Ray,
 }
 
 impl ShapeTest {
@@ -34,13 +35,27 @@ impl ShapeTest {
             transform: Matrix::new_identity_matrix(4),
             material: reflection::Material::default_material(),
             id: Uuid::new_v4(),
+            saved_ray: Ray {
+                direction: Tuple {
+                    x: 0.0,
+                    y: 0.0,
+                    z: 0.0,
+                    w: W::Point,
+                },
+                origin: Tuple {
+                    x: 0.0,
+                    y: 0.0,
+                    z: 0.0,
+                    w: W::Point,
+                },
+            },
         }
     }
 }
 
 pub trait Shape {
-    fn local_intersect(&self, local_ray: Ray) -> Vec<Intersection>;
-    fn intersect(&self, ray: Ray) -> Vec<Intersection> {
+    fn local_intersect(&mut self, local_ray: Ray) -> Vec<Intersection>;
+    fn intersect(&mut self, ray: Ray) -> Vec<Intersection> {
         self.local_intersect(ray)
     }
     fn local_normal_at(&self, point: Tuple) -> Tuple;
@@ -56,10 +71,8 @@ pub trait Shape {
 }
 
 impl Shape for ShapeTest {
-    fn local_intersect(&self, local_ray: Ray) -> Vec<Intersection> {
-        unsafe {
-            SAVED_RAY = local_ray.transform(&self.transform.inverse().unwrap());
-        }
+    fn local_intersect(&mut self, local_ray: Ray) -> Vec<Intersection> {
+        self.saved_ray = local_ray.transform(&self.transform.inverse().unwrap());
         vec![]
     }
 
@@ -122,8 +135,8 @@ impl Clone for Box<dyn Shape> {
 #[cfg(test)]
 mod transformation_tests {
     use super::*;
-    use crate::transformation;
     use crate::Color;
+    use crate::transformation;
     use std::f64::consts::PI;
 
     #[test]
@@ -176,8 +189,8 @@ mod transformation_tests {
         s.set_transform(&transformation::create_scaling(2.0, 2.0, 2.0));
         let _: Vec<Intersection> = s.intersect(r);
         unsafe {
-            assert_eq!(SAVED_RAY.origin, Tuple::new_point(0.0, 0.0, -2.5));
-            assert_eq!(SAVED_RAY.direction, Tuple::new_vector(0.0, 0.0, 0.5));
+            assert_eq!(s.saved_ray.origin.clone(), Tuple::new_point(0.0, 0.0, -2.5));
+            assert_eq!(s.saved_ray.direction, Tuple::new_vector(0.0, 0.0, 0.5));
         }
     }
 
@@ -192,8 +205,8 @@ mod transformation_tests {
         s.set_transform(&transformation::create_translation(5.0, 0.0, 0.0));
         let _: Vec<Intersection> = s.intersect(r);
         unsafe {
-            assert_eq!(SAVED_RAY.origin, Tuple::new_point(-5.0, 0.0, -5.0));
-            assert_eq!(SAVED_RAY.direction, Tuple::new_vector(0.0, 0.0, 1.0));
+            assert_eq!(s.saved_ray.origin, Tuple::new_point(-5.0, 0.0, -5.0));
+            assert_eq!(s.saved_ray.direction, Tuple::new_vector(0.0, 0.0, 1.0));
         }
     }
 

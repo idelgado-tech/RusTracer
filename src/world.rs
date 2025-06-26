@@ -1,7 +1,7 @@
 use crate::{
     color::{self, Color},
-    ray::{hit_intersections, reflect, Intersection, Ray},
-    reflection::{lighting, Material, PointLight},
+    ray::{Intersection, Ray, hit_intersections, reflect},
+    reflection::{Material, PointLight, lighting},
     shape::{shape::Shape, sphere::Sphere},
     transformation,
     tuple::Tuple,
@@ -66,7 +66,7 @@ impl World {
         h.is_some() && h.unwrap().t < distance
     }
 
-    pub fn shade_hit(&self, comps: &Computation) -> Color {
+    pub fn shade_hit(&self, comps: &Computation, remaining_calculations: usize) -> Color {
         let mut shade = Color::new_color(0.0, 0.0, 0.0);
 
         for light in &self.light_sources {
@@ -80,28 +80,27 @@ impl World {
                 is_shadow,
                 &comps.object.clone(),
             );
-            shade += self.reflected_color(comps.clone());
+            shade += self.reflected_color(comps.clone(), remaining_calculations);
         }
         shade
     }
 
-    pub fn color_at(&self, ray: &Ray) -> Color {
+    pub fn color_at(&self, ray: &Ray, remaining_calculations: usize) -> Color {
         let intersections = self.intersect_world(ray);
 
         if intersections.is_empty() {
             return color::BLACK;
         }
         let comps = prepare_computations(&intersections[0], ray);
-        self.shade_hit(&comps)
+        self.shade_hit(&comps, remaining_calculations)
     }
 
-    pub fn reflected_color(&self, comps: Computation) -> Color {
-
-        if comps.object.get_material().reflective == 0.0 {
-           return color::BLACK;
+    pub fn reflected_color(&self, comps: Computation, remaining_calculations: usize) -> Color {
+        if comps.object.get_material().reflective == 0.0 || remaining_calculations == 0 {
+            return color::BLACK;
         }
         let reflect_ray = Ray::new(comps.over_point, comps.reflectv);
-        let ref_color = self.color_at(&reflect_ray);
+        let ref_color = self.color_at(&reflect_ray,remaining_calculations -1);
 
         ref_color * comps.object.get_material().reflective
     }
@@ -174,7 +173,7 @@ pub fn prepare_computations(intersection: &Intersection, ray: &Ray) -> Computati
 
 #[cfg(test)]
 mod matrix_tests {
-    use crate::transformation::create_translation;
+    use crate::{reflection, transformation::create_translation};
 
     use super::*;
 
@@ -295,7 +294,7 @@ mod matrix_tests {
             t: 4.0,
         };
         let comps = prepare_computations(&i, &ray);
-        let c = w.shade_hit(&comps);
+        let c = w.shade_hit(&comps,reflection::MAX_RECURTION);
 
         assert_eq!(
             c,
@@ -322,7 +321,7 @@ mod matrix_tests {
             t: 0.5,
         };
         let comps = prepare_computations(&i, &ray);
-        let c = w.shade_hit(&comps);
+        let c = w.shade_hit(&comps,reflection::MAX_RECURTION);
 
         assert_eq!(
             c,
@@ -338,7 +337,7 @@ mod matrix_tests {
             Tuple::new_point(0.0, 0.0, -5.0),
             Tuple::new_vector(0.0, 1.0, 0.0),
         );
-        let color_at = w.color_at(&ray);
+        let color_at = w.color_at(&ray,reflection::MAX_RECURTION);
 
         assert_eq!(color_at, Color::new_color(0.0, 0.0, 0.0));
     }
@@ -351,7 +350,7 @@ mod matrix_tests {
             Tuple::new_point(0.0, 0.0, -5.0),
             Tuple::new_vector(0.0, 0.0, 1.0),
         );
-        let color_at = w.color_at(&ray);
+        let color_at = w.color_at(&ray,reflection::MAX_RECURTION);
 
         assert_eq!(
             color_at,
@@ -375,7 +374,7 @@ mod matrix_tests {
             Tuple::new_point(0.0, 0.0, 0.75),
             Tuple::new_vector(0.0, 0.0, -1.0),
         );
-        let color_at = w.color_at(&ray);
+        let color_at = w.color_at(&ray,reflection::MAX_RECURTION);
 
         assert_eq!(color_at, w.objects[1].get_material().color);
     }
@@ -441,7 +440,7 @@ mod matrix_tests {
             t: 4.0,
         };
         let comps = prepare_computations(&i, &ray);
-        let c = w.shade_hit(&comps);
+        let c = w.shade_hit(&comps,reflection::MAX_RECURTION);
 
         assert_eq!(c, Color::new_color(0.1, 0.1, 0.1));
     }

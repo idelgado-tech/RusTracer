@@ -1,6 +1,6 @@
 use indicatif::{ProgressBar, ProgressStyle};
 
-use crate::{canvas::Canvas, matrix::Matrix, ray::Ray, tuple::Tuple, world::World};
+use crate::{canvas::Canvas, matrix::Matrix, ray::Ray, reflection, tuple::Tuple, world::World};
 
 ///virtual camera
 #[derive(Debug, Clone)]
@@ -71,7 +71,7 @@ impl Camera {
         for y in 0..self.vsize {
             for x in 0..self.hsize {
                 let ray = self.ray_for_pixel(x, y);
-                let color = world.color_at(&ray);
+                let color = world.color_at(&ray,reflection::MAX_RECURTION);
                 image.set_pixel_color(x, y, color);
             }
         }
@@ -89,7 +89,7 @@ impl Camera {
         for y in 0..self.vsize {
             for x in 0..self.hsize {
                 let ray = self.ray_for_pixel(x, y);
-                let color = world.color_at(&ray);
+                let color = world.color_at(&ray,reflection::MAX_RECURTION);
                 image.set_pixel_color(x, y, color);
             }
             bar.inc(self.hsize as u64);

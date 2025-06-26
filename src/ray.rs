@@ -1,8 +1,4 @@
-use crate::{
-    matrix::*,
-    shape::shape::Shape,
-    tuple::*,
-};
+use crate::{matrix::*, shape::shape::Shape, tuple::*};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Ray {
@@ -124,7 +120,7 @@ mod transformation_tests {
         let origin = Tuple::new_point(0.0, 0.0, -5.0);
         let direction = Tuple::new_vector(0.0, 0.0, 1.0);
         let ray = Ray::new(origin, direction);
-        let s = Sphere::sphere();
+        let mut s = Sphere::sphere();
         let xs = s.intersect(ray);
 
         assert_eq!(xs.len(), 2);
@@ -140,7 +136,7 @@ mod transformation_tests {
         let origin = Tuple::new_point(0.0, 1.0, -5.0);
         let direction = Tuple::new_vector(0.0, 0.0, 1.0);
         let ray = Ray::new(origin, direction);
-        let s = Sphere::sphere();
+        let mut s = Sphere::sphere();
         let xs = s.intersect(ray);
 
         assert_eq!(xs.len(), 2);
@@ -154,7 +150,7 @@ mod transformation_tests {
         let origin = Tuple::new_point(0.0, 2.0, -5.0);
         let direction = Tuple::new_vector(0.0, 0.0, 1.0);
         let ray = Ray::new(origin, direction);
-        let s = Sphere::sphere();
+        let mut s = Sphere::sphere();
         let xs = s.intersect(ray);
 
         assert_eq!(xs.len(), 0);
@@ -166,7 +162,7 @@ mod transformation_tests {
         let origin = Tuple::new_point(0.0, 0.0, 0.0);
         let direction = Tuple::new_vector(0.0, 0.0, 1.0);
         let ray = Ray::new(origin, direction);
-        let s = Sphere::sphere();
+        let mut s = Sphere::sphere();
         let xs = s.intersect(ray);
 
         assert_eq!(xs.len(), 2);

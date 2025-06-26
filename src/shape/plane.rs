@@ -30,7 +30,7 @@ impl Shape for Plane {
         self.transform.inverse().unwrap() * Tuple::new_vector(0.0, 1.0, 0.0)
     }
 
-    fn local_intersect(&self, local_ray: Ray) -> Vec<Intersection> {
+    fn local_intersect(& mut self, local_ray: Ray) -> Vec<Intersection> {
         let transformed_ray = local_ray.transform(&self.transform.inverse().unwrap());
         if transformed_ray.direction.y.abs() < 0.00001 {
             vec![]
@@ -86,7 +86,7 @@ mod transformation_tests {
     #[test]
     //Scenario: Intersect with a ray parallel to the plane
     fn test_ray_paralle() {
-        let p = Plane::plane();
+        let mut p = Plane::plane();
         let r = Ray::new(
             Tuple::new_point(0.0, 10.0, 0.0),
             Tuple::new_vector(0.0, 0.0, 1.0),
@@ -98,7 +98,7 @@ mod transformation_tests {
     #[test]
     // Scenario: Intersect with a coplanar ray
     fn test_ray_coplanaire() {
-        let p = Plane::plane();
+        let mut p = Plane::plane();
         let r = Ray::new(
             Tuple::new_point(0.0, 0.0, 0.0),
             Tuple::new_vector(0.0, 0.0, 1.0),
@@ -110,7 +110,7 @@ mod transformation_tests {
     #[test]
     // Scenario: A ray intersecting a plane from above
     fn test_intersection_from_above(){
-        let p = Plane::plane();
+        let mut p = Plane::plane();
         let r = Ray::new(
             Tuple::new_point(0.0, 1.0, 0.0),
             Tuple::new_vector(0.0, -1.0, 0.0),
@@ -123,7 +123,7 @@ mod transformation_tests {
 
     #[test]
     fn test_intersection_from_below(){
-        let p = Plane::plane();
+        let mut p = Plane::plane();
         let r = Ray::new(
             Tuple::new_point(0.0, -1.0, 0.0),
             Tuple::new_vector(0.0, 1.0, 0.0),
