@@ -12,6 +12,7 @@ mod transformation;
 mod tuple;
 mod utils;
 mod pattern;
+mod refraction;
 mod world;
 
 use std::f64::consts::PI;

@@ -54,19 +54,25 @@ impl ShapeTest {
 }
 
 pub trait Shape {
-    fn local_intersect(&mut self, local_ray: Ray) -> Vec<Intersection>;
     fn intersect(&mut self, ray: Ray) -> Vec<Intersection> {
         self.local_intersect(ray)
     }
-    fn local_normal_at(&self, point: Tuple) -> Tuple;
     fn normal_at(&self, point: Tuple) -> Tuple {
         self.local_normal_at(point)
     }
+    
+    fn local_intersect(&mut self, local_ray: Ray) -> Vec<Intersection>;
+    fn local_normal_at(&self, point: Tuple) -> Tuple;
+
     fn box_clone(&self) -> Box<dyn Shape>;
+    fn box_owned(&self) -> Box<dyn Shape>;
+
     fn get_transform(&self) -> Matrix;
     fn set_transform(&mut self, new_stransform: &Matrix);
+
     fn get_material(&self) -> Material;
     fn set_material(&mut self, new_material: &Material);
+    
     fn get_id(&self) -> Uuid;
 }
 
@@ -105,6 +111,10 @@ impl Shape for ShapeTest {
 
     fn box_clone(&self) -> Box<dyn Shape> {
         Box::new((*self).clone())
+    }
+
+    fn box_owned(&self) -> Box<dyn Shape> {
+        Box::new((*self).to_owned())
     }
 }
 

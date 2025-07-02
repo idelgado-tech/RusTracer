@@ -125,9 +125,9 @@ mod transformation_tests {
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, 4.0);
-        assert!((xs[0].object == s.box_clone()));
+        assert!((xs[0].object == s.box_owned()));
         assert_eq!(xs[1].t, 6.0);
-        assert!((xs[1].object == s.box_clone()));
+        assert!((xs[1].object == s.box_owned()));
     }
 
     #[test]
@@ -174,18 +174,18 @@ mod transformation_tests {
     ///An intersection encapsulates t and object
     fn intersection_creation() {
         let s = Sphere::sphere();
-        let i = Intersection::new(3.5, s.box_clone());
+        let i = Intersection::new(3.5, s.box_owned());
 
         assert_eq!(i.t, 3.5);
-        assert!((i.object == s.box_clone()));
+        assert!((i.object == s.box_owned()));
     }
 
     #[test]
     ///The hit, when all intersections have positive t
     fn hit_intersections_1() {
         let s = Sphere::sphere();
-        let i1 = Intersection::new(1.0, s.box_clone());
-        let i2 = Intersection::new(2.0, s.box_clone());
+        let i1 = Intersection::new(1.0, s.box_owned());
+        let i2 = Intersection::new(2.0, s.box_owned());
         let intersections = vec![i1.clone(), i2];
         let i = hit_intersections(intersections).unwrap();
         assert_eq!(i, i1);
@@ -195,8 +195,8 @@ mod transformation_tests {
     ///The hit, when some intersections have negative t
     fn hit_intersections_2() {
         let s = Sphere::sphere();
-        let i1 = Intersection::new(-1.0, s.box_clone());
-        let i2 = Intersection::new(2.0, s.box_clone());
+        let i1 = Intersection::new(-1.0, s.box_owned());
+        let i2 = Intersection::new(2.0, s.box_owned());
         let intersections = vec![i1.clone(), i2.clone()];
         let i = hit_intersections(intersections).unwrap();
         assert_eq!(i, i2);
@@ -206,8 +206,8 @@ mod transformation_tests {
     ///The hit, when some intersections have negative t
     fn hit_intersections_3() {
         let s = Sphere::sphere();
-        let i1 = Intersection::new(-1.0, s.box_clone());
-        let i2 = Intersection::new(-2.0, s.box_clone());
+        let i1 = Intersection::new(-1.0, s.box_owned());
+        let i2 = Intersection::new(-2.0, s.box_owned());
         let intersections = vec![i1.clone(), i2.clone()];
         let i = hit_intersections(intersections);
         assert_eq!(i, Option::None);
@@ -217,10 +217,10 @@ mod transformation_tests {
     ///Scenario​: The hit is always the lowest nonnegative intersection
     fn hit_intersections_4() {
         let s = Sphere::sphere();
-        let i1 = Intersection::new(5.0, s.box_clone());
-        let i2 = Intersection::new(7.0, s.box_clone());
-        let i3 = Intersection::new(-2.0, s.box_clone());
-        let i4 = Intersection::new(2.0, s.box_clone());
+        let i1 = Intersection::new(5.0, s.box_owned());
+        let i2 = Intersection::new(7.0, s.box_owned());
+        let i3 = Intersection::new(-2.0, s.box_owned());
+        let i4 = Intersection::new(2.0, s.box_owned());
 
         let intersections = vec![i1.clone(), i2.clone(), i3.clone(), i4.clone()];
         let i = hit_intersections(intersections).unwrap();

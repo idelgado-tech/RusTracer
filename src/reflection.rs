@@ -32,6 +32,8 @@ pub struct Material {
     pub shininess: f64,
     pub pattern: Option<Pattern>,
     pub reflective: f64,
+    pub transparancy: f64,
+    pub refractive_index: f64,
 }
 
 impl Material {
@@ -44,6 +46,8 @@ impl Material {
             shininess: 200.0,
             pattern: None,
             reflective: 0.0,
+            transparancy: 0.0,
+            refractive_index: 1.0,
         }
     }
 
@@ -54,6 +58,8 @@ impl Material {
         specular: f64,
         shininess: f64,
         reflective: f64,
+        transparancy: f64,
+        refractive_index: f64,
         pattern: Option<Pattern>,
     ) -> Material {
         Material {
@@ -64,6 +70,8 @@ impl Material {
             shininess,
             pattern,
             reflective,
+            transparancy,
+            refractive_index,
         }
     }
 
@@ -149,6 +157,14 @@ mod matrix_tests {
     }
 
     #[test]
+    ///Transparency and Refractive Index for the default material
+    fn refractive_material_creation() {
+        let material = Material::default_material();
+        assert_eq!(material.transparancy, 0.0);
+        assert_eq!(material.refractive_index, 1.0);
+    }
+
+    #[test]
     ///A sphere may be assigned a material
     fn sphere_material_creation() {
         let mut s = Sphere::sphere();
@@ -179,7 +195,7 @@ mod matrix_tests {
             &eyev,
             &normalv,
             in_shadow,
-            &Sphere::sphere().box_clone().into(),
+            &Sphere::sphere().box_owned().into(),
         );
         assert_eq!(result, Color::new_color(1.9, 1.9, 1.9));
     }
@@ -205,7 +221,7 @@ mod matrix_tests {
             &eyev,
             &normalv,
             in_shadow,
-            &Sphere::sphere().box_clone().into(),
+            &Sphere::sphere().box_owned(),
         );
         assert_eq!(result, Color::new_color(1.0, 1.0, 1.0));
     }
@@ -231,7 +247,7 @@ mod matrix_tests {
             &eyev,
             &normalv,
             in_shadow,
-            &Sphere::sphere().box_clone().into(),
+            &Sphere::sphere().box_owned(),
         );
         assert_eq!(
             result,
@@ -260,7 +276,7 @@ mod matrix_tests {
             &eyev,
             &normalv,
             in_shadow,
-            &Sphere::sphere().box_clone().into(),
+            &Sphere::sphere().box_owned(),
         );
         assert_eq!(result, Color::new_color(0.1, 0.1, 0.1));
     }
@@ -286,7 +302,7 @@ mod matrix_tests {
             &eyev,
             &normalv,
             in_shadow,
-            &Sphere::sphere().box_clone().into(),
+            &Sphere::sphere().box_owned(),
         );
         assert_eq!(result, Color::new_color(0.1, 0.1, 0.1));
     }

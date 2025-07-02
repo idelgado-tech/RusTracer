@@ -1,9 +1,9 @@
 use uuid::Uuid;
 
+use crate::matrix::Matrix;
 use crate::ray::{Intersection, Ray};
 use crate::reflection::Material;
 use crate::tuple::{self, Tuple};
-use crate::{matrix::Matrix};
 
 use super::shape::Shape;
 
@@ -26,6 +26,20 @@ impl Sphere {
             material: Material::default_material(),
         }
     }
+
+    pub fn new_glass_sphere() -> Sphere {
+        let mut material = Material::default_material();
+        material.transparancy = 1.0;
+        material.refractive_index = 1.5;
+
+        Sphere {
+            origin: Tuple::new_point(0.0, 0.0, 0.0),
+            radius: 1.0,
+            id: Uuid::new_v4(),
+            transform: Matrix::new_identity_matrix(4),
+            material,
+        }
+    }
 }
 
 impl Shape for Sphere {
@@ -37,7 +51,7 @@ impl Shape for Sphere {
         world_normal.normalize()
     }
 
-    fn local_intersect(& mut self, local_ray: Ray) -> Vec<Intersection> {
+    fn local_intersect(&mut self, local_ray: Ray) -> Vec<Intersection> {
         let transformed_ray = local_ray.transform(&self.transform.inverse().unwrap());
         let sphere_to_ray = transformed_ray.origin - self.clone().origin;
         let a = Tuple::dot_product(&transformed_ray.direction, &transformed_ray.direction);
@@ -79,13 +93,27 @@ impl Shape for Sphere {
     fn box_clone(&self) -> Box<dyn Shape> {
         Box::new((*self).clone())
     }
+
+    fn box_owned(&self) -> Box<dyn Shape> {
+        Box::new((*self).to_owned())
+    }
 }
 
 #[cfg(test)]
-mod transformation_tests {
+mod sphere_tests {
     use super::*;
     use crate::transformation;
     use std::f64::consts::PI;
+
+    #[test]
+    ///The normal on a sphere at a point on the x axis
+    fn glassy_sphere_test() {
+        let s = Sphere::new_glass_sphere();
+
+        assert_eq!(s.transform, Matrix::new_identity_matrix(4));
+        assert_eq!(s.material.transparancy, 1.0);
+        assert_eq!(s.material.refractive_index, 1.5);
+    }
 
     #[test]
     ///The normal on a sphere at a point on the x axis

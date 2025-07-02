@@ -100,7 +100,7 @@ impl World {
             return color::BLACK;
         }
         let reflect_ray = Ray::new(comps.over_point, comps.reflectv);
-        let ref_color = self.color_at(&reflect_ray,remaining_calculations -1);
+        let ref_color = self.color_at(&reflect_ray, remaining_calculations - 1);
 
         ref_color * comps.object.get_material().reflective
     }
@@ -120,6 +120,8 @@ pub struct Computation {
     pub normalv: Tuple,
     pub inside: bool,
     pub reflectv: Tuple,
+    pub n1: f64,
+    pub n2: f64,
 }
 
 impl PartialEq for Computation {
@@ -132,6 +134,8 @@ impl PartialEq for Computation {
             && self.normalv == other.normalv
             && self.inside == other.inside
             && self.reflectv == other.reflectv
+            && self.n1 == other.n1
+            && self.n2 == other.n2
     }
 }
 
@@ -146,6 +150,8 @@ impl Computation {
             normalv: Tuple::new_vector(0.0, 0.0, 0.0),
             inside: true,
             reflectv: Tuple::new_vector(0.0, 0.0, 0.0),
+            n1: 0.0,
+            n2: 0.0,
         }
     }
 }
@@ -168,6 +174,63 @@ pub fn prepare_computations(intersection: &Intersection, ray: &Ray) -> Computati
     }
 
     comps.over_point = comps.point.clone() + comps.normalv.clone() * SHADOW_EPSILON;
+    comps
+}
+
+pub fn prepare_computations_v2(
+    intersection: &Intersection,
+    ray: &Ray,
+    intersection_list: Vec<Intersection>,
+) -> Computation {
+    let mut comps = Computation::new();
+
+    comps.t = intersection.t;
+    comps.object = intersection.object.clone();
+    comps.point = ray.position(comps.t);
+    comps.eyev = ray.direction.clone() * -1.0;
+    comps.normalv = comps.object.normal_at(comps.point.clone());
+    comps.reflectv = reflect(&ray.direction.clone(), &comps.normalv);
+
+    if Tuple::dot_product(&comps.normalv, &comps.eyev) < 0.0 {
+        comps.inside = true;
+        comps.normalv = comps.normalv * -1.0;
+    } else {
+        comps.inside = false;
+    }
+
+    comps.over_point = comps.point.clone() + comps.normalv.clone() * SHADOW_EPSILON;
+
+    let mut container: Vec<Box<dyn Shape>> = Vec::new();
+
+    for i in intersection_list {
+        let is_hit = i == *intersection;
+        if is_hit {
+            if container.is_empty() {
+                comps.n1 = 1.0;
+            } else {
+                comps.n1 = container.last().unwrap().get_material().refractive_index
+            }
+        }
+
+        let find_item = container.iter().position(|n| *n == i.object.box_owned());
+
+        match find_item {
+            Some(x) => {
+                container.remove(x);
+            }
+            None => container.push(i.object),
+        }
+
+        if is_hit {
+            if container.is_empty() {
+                comps.n2 = 1.0;
+            } else {
+
+                comps.n2 = container.last().unwrap().get_material().refractive_index
+            }
+            break;
+        }
+    }
     comps
 }
 
@@ -294,7 +357,7 @@ mod matrix_tests {
             t: 4.0,
         };
         let comps = prepare_computations(&i, &ray);
-        let c = w.shade_hit(&comps,reflection::MAX_RECURTION);
+        let c = w.shade_hit(&comps, reflection::MAX_RECURTION);
 
         assert_eq!(
             c,
@@ -321,7 +384,7 @@ mod matrix_tests {
             t: 0.5,
         };
         let comps = prepare_computations(&i, &ray);
-        let c = w.shade_hit(&comps,reflection::MAX_RECURTION);
+        let c = w.shade_hit(&comps, reflection::MAX_RECURTION);
 
         assert_eq!(
             c,
@@ -337,7 +400,7 @@ mod matrix_tests {
             Tuple::new_point(0.0, 0.0, -5.0),
             Tuple::new_vector(0.0, 1.0, 0.0),
         );
-        let color_at = w.color_at(&ray,reflection::MAX_RECURTION);
+        let color_at = w.color_at(&ray, reflection::MAX_RECURTION);
 
         assert_eq!(color_at, Color::new_color(0.0, 0.0, 0.0));
     }
@@ -350,7 +413,7 @@ mod matrix_tests {
             Tuple::new_point(0.0, 0.0, -5.0),
             Tuple::new_vector(0.0, 0.0, 1.0),
         );
-        let color_at = w.color_at(&ray,reflection::MAX_RECURTION);
+        let color_at = w.color_at(&ray, reflection::MAX_RECURTION);
 
         assert_eq!(
             color_at,
@@ -374,7 +437,7 @@ mod matrix_tests {
             Tuple::new_point(0.0, 0.0, 0.75),
             Tuple::new_vector(0.0, 0.0, -1.0),
         );
-        let color_at = w.color_at(&ray,reflection::MAX_RECURTION);
+        let color_at = w.color_at(&ray, reflection::MAX_RECURTION);
 
         assert_eq!(color_at, w.objects[1].get_material().color);
     }
@@ -440,7 +503,7 @@ mod matrix_tests {
             t: 4.0,
         };
         let comps = prepare_computations(&i, &ray);
-        let c = w.shade_hit(&comps,reflection::MAX_RECURTION);
+        let c = w.shade_hit(&comps, reflection::MAX_RECURTION);
 
         assert_eq!(c, Color::new_color(0.1, 0.1, 0.1));
     }

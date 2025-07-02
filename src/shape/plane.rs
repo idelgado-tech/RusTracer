@@ -36,7 +36,7 @@ impl Shape for Plane {
             vec![]
         } else {
             let t = -transformed_ray.origin.y / transformed_ray.direction.y;
-            vec![Intersection::new(t, self.box_clone())]
+            vec![Intersection::new(t, self.box_owned())]
         }
     }
 
@@ -51,6 +51,7 @@ impl Shape for Plane {
     fn set_material(&mut self, new_material: &Material) {
         self.material = new_material.clone();
     }
+
     fn get_material(&self) -> Material {
         self.material.clone()
     }
@@ -59,8 +60,12 @@ impl Shape for Plane {
         self.id
     }
 
-    fn box_clone(&self) -> Box<dyn Shape> {
+   fn box_clone(&self) -> Box<dyn Shape> {
         Box::new((*self).clone())
+    }
+
+    fn box_owned(&self) -> Box<dyn Shape> {
+        Box::new((*self).to_owned())
     }
 }
 
@@ -118,7 +123,7 @@ mod transformation_tests {
         let xs = p.local_intersect(r);
         assert_eq!(xs.len(), 1);
         assert_eq!(xs[0].t,1.0);
-        assert!(xs[0].object==p.box_clone());
+        assert!(xs[0].object==p.box_owned());
     }
 
     #[test]
@@ -131,7 +136,7 @@ mod transformation_tests {
         let xs = p.local_intersect(r);
         assert_eq!(xs.len(), 1);
         assert_eq!(xs[0].t,1.0);
-        assert!(xs[0].object==p.box_clone());
+        assert!(xs[0].object==p.box_owned());
 }
 
 }
