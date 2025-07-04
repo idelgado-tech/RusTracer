@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::matrix::Matrix;
+use crate::matrix::{memoized_inverse, Matrix};
 use crate::ray::{Intersection, Ray};
 use crate::reflection::Material;
 use crate::tuple::{self, Tuple};
@@ -46,15 +46,15 @@ impl Sphere {
 
 impl Shape for Sphere {
     fn local_normal_at(&self, p: Tuple) -> Tuple {
-        let object_point = self.transform.inverse().unwrap() * p.clone();
+        let object_point = memoized_inverse(self.transform.clone()).unwrap() * p.clone();
         let object_normal = object_point - Tuple::new_point(0.0, 0.0, 0.0);
-        let mut world_normal = self.transform.inverse().unwrap().transpose() * object_normal;
+        let mut world_normal = memoized_inverse(self.transform.clone()).unwrap().transpose() * object_normal;
         world_normal.w = tuple::W::from_int(0);
         world_normal.normalize()
     }
 
     fn local_intersect(&mut self, local_ray: Ray) -> Vec<Intersection> {
-        let transformed_ray = local_ray.transform(&self.transform.inverse().unwrap());
+        let transformed_ray = local_ray.transform(&memoized_inverse(self.transform.clone()).unwrap());
         let sphere_to_ray = transformed_ray.origin - self.clone().origin;
         let a = Tuple::dot_product(&transformed_ray.direction, &transformed_ray.direction);
         let b = 2.0 * Tuple::dot_product(&transformed_ray.direction, &sphere_to_ray);

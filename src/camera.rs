@@ -4,6 +4,7 @@ use indicatif::{ParallelProgressIterator, ProgressBar, ProgressStyle};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use rayon::prelude::*;
 
+use crate::matrix::memoized_inverse;
 use crate::{
     canvas::Canvas,
     color::{self, Color},
@@ -71,8 +72,8 @@ impl Camera {
         let world_y = self.half_height - yoffset;
 
         let pixel =
-            self.transformation.inverse().unwrap() * Tuple::new_point(world_x, world_y, -1.0);
-        let origin = self.transformation.inverse().unwrap() * Tuple::new_point(0.0, 0.0, 0.0);
+            memoized_inverse(self.clone().transformation).unwrap() * Tuple::new_point(world_x, world_y, -1.0);
+        let origin = memoized_inverse(self.clone().transformation).unwrap() * Tuple::new_point(0.0, 0.0, 0.0);
         let direction = (pixel - origin.clone()).normalize();
 
         Ray::new(origin, direction)

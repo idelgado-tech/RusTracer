@@ -97,7 +97,7 @@ pub fn view_transform(from: &Tuple, to: &Tuple, up: &Tuple) -> Matrix {
     let upn = up.normalize();
     let left = Tuple::cross_product(&forward, &upn);
     let true_up = Tuple::cross_product(&left, &forward);
-    let orientation = Matrix::new_matrix_with_data(
+    let orientation = Matrix::with_data(
         4,
         vec![
             left.x, left.y, left.z, 0.0, true_up.x, true_up.y, true_up.z, 0.0, -forward.x,
@@ -362,7 +362,7 @@ mod transformation_tests {
         let t = view_transform(&from, &to, &up);
 
         assert_eq!(
-            Matrix::new_matrix_with_data(
+            Matrix::with_data(
                 4,
                 vec![
                     -0.5070925528371099,

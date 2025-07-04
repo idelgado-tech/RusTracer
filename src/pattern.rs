@@ -1,6 +1,6 @@
 use crate::{
     color::{self, Color},
-    matrix::Matrix,
+    matrix::{memoized_inverse, Matrix},
     shape::shape::Shape,
     tuple::Tuple,
 };
@@ -142,8 +142,8 @@ impl Pattern {
     }
 
     pub fn color_at_object(&self, obj: &Box<dyn Shape>, point: Tuple) -> Color {
-        let obj_point = obj.get_transform().inverse().unwrap() * point;
-        let pattern_point = self.get_transform().inverse().unwrap() * obj_point;
+        let obj_point = memoized_inverse( obj.get_transform()).unwrap() * point;
+        let pattern_point = memoized_inverse(self.get_transform()).unwrap() * obj_point;
         self.color_at_point(pattern_point)
     }
 }

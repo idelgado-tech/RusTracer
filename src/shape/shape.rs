@@ -1,6 +1,7 @@
 use std::fmt::{Debug, Formatter};
 
 use crate::color::Color;
+use crate::matrix::memoized_inverse;
 use crate::pattern::Pattern;
 use crate::ray::{Intersection, Ray};
 use crate::{matrix::Matrix, reflection};
@@ -92,14 +93,14 @@ pub trait Shape {
 
 impl Shape for ShapeTest {
     fn local_intersect(&mut self, local_ray: Ray) -> Vec<Intersection> {
-        self.saved_ray = local_ray.transform(&self.transform.inverse().unwrap());
+        self.saved_ray = local_ray.transform(& memoized_inverse(self.transform.clone()).unwrap());
         vec![]
     }
 
     fn local_normal_at(&self, point: Tuple) -> Tuple {
-        let local_point = self.transform.inverse().unwrap() * point;
+        let local_point = memoized_inverse(self.transform.clone()).unwrap() * point;
         let local_normal = local_point;
-        let mut world_normal = self.transform.inverse().unwrap().transpose() * local_normal;
+        let mut world_normal = memoized_inverse(self.transform.clone()).unwrap() * local_normal;
         world_normal.w = W::from_int(0);
         world_normal.normalize()
     }

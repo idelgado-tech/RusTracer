@@ -1,11 +1,12 @@
 use std::{error::Error, fmt};
 
-#[derive(Debug)]
+//Refacto this
+#[derive(Debug,Clone)]
 pub struct TracerError {
     repr: Repr,
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 enum Repr {
     Simple(ErrorKind),
     // &str is a fat pointer, but &&str is a thin pointer.

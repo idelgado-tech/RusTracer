@@ -1,3 +1,6 @@
+use memoize::memoize;
+use ordered_float::OrderedFloat;
+
 use crate::error;
 use crate::error::ErrorKind;
 use crate::tuple::*;
@@ -6,27 +9,27 @@ use crate::utils::*;
 use std::ops::Mul;
 
 ///Represent a square matrix
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Matrix {
     size: usize,
-    matrix: Vec<f64>,
+    matrix: Vec<OrderedFloat<f64>>,
 }
 
-impl PartialEq for Matrix {
-    fn eq(&self, other: &Self) -> bool {
-        if self.size != other.size {
-            return false;
-        } else {
-            for m_tuple in self.matrix.iter().zip(other.matrix.iter()) {
-                let (am, bm) = m_tuple;
-                if !compare_float(*am, *bm) {
-                    return false;
-                }
-            }
-        }
-        true
-    }
-}
+// impl PartialEq for Matrix {
+//     fn eq(&self, other: &Self) -> bool {
+//         if self.size != other.size {
+//             return false;
+//         } else {
+//             for m_tuple in self.matrix.iter().zip(other.matrix.iter()) {
+//                 let (am, bm) = m_tuple;
+//                 if !compare_float(*am, *bm) {
+//                     return false;
+//                 }
+//             }
+//         }
+//         true
+//     }
+// }
 
 impl Mul for Matrix {
     type Output = Matrix;
@@ -104,11 +107,18 @@ impl Matrix {
         }
         Matrix {
             size,
-            matrix: vec![0.0; size * size],
+            matrix: vec![OrderedFloat(0.0); size * size],
         }
     }
 
-    pub fn new_matrix_with_data(size: usize, data: Vec<f64>) -> Matrix {
+    pub fn with_data(size: usize, data: Vec<f64>) -> Matrix {
+        Matrix {
+            size,
+            matrix: data.iter().map(|f| OrderedFloat(*f)).collect(),
+        }
+    }
+
+    pub fn with_ordered_data(size: usize, data: Vec<OrderedFloat<f64>>) -> Matrix {
         Matrix { size, matrix: data }
     }
 
@@ -118,7 +128,7 @@ impl Matrix {
         }
         let mut matrix = Matrix {
             size,
-            matrix: vec![0.0; size * size],
+            matrix: vec![OrderedFloat(0.0); size * size],
         };
 
         for row in 0..size {
@@ -129,11 +139,15 @@ impl Matrix {
     }
 
     pub fn element(&self, row: usize, column: usize) -> f64 {
+        self.matrix[(row * self.size) + column].into_inner()
+    }
+
+    pub fn wrapped_element(&self, row: usize, column: usize) -> OrderedFloat<f64> {
         self.matrix[(row * self.size) + column]
     }
 
     pub fn set_element(&mut self, row: usize, column: usize, value: f64) {
-        self.matrix[(row * self.size) + column] = value;
+        self.matrix[(row * self.size) + column] = OrderedFloat(value);
     }
 
     pub fn transpose(&self) -> Matrix {
@@ -166,11 +180,11 @@ impl Matrix {
         for irow in 0..self.size {
             for icol in 0..self.size {
                 if row != irow && col != icol {
-                    data_vec.push(self.element(irow, icol));
+                    data_vec.push(self.wrapped_element(irow, icol));
                 }
             }
         }
-        Matrix::new_matrix_with_data(self.size - 1, data_vec)
+        Matrix::with_ordered_data(self.size - 1, data_vec)
     }
 
     pub fn minor(&self, row: usize, col: usize) -> f64 {
@@ -205,6 +219,11 @@ impl Matrix {
     }
 }
 
+#[memoize]
+pub fn memoized_inverse(matrix: Matrix) -> Result<Matrix, error::TracerError> {
+    matrix.inverse()
+}
+
 #[cfg(test)]
 mod matrix_tests {
     use crate::utils;
@@ -217,7 +236,7 @@ mod matrix_tests {
         let data_vector = vec![
             1.0, 2.0, 3.0, 4.0, 5.5, 6.5, 7.5, 8.5, 9.0, 10.0, 11.0, 12.0, 13.5, 14.5, 15.5, 16.5,
         ];
-        let m = Matrix::new_matrix_with_data(4, data_vector);
+        let m = Matrix::with_data(4, data_vector);
 
         assert_eq!(m.element(0, 0), 1.0);
         assert_eq!(m.element(0, 3), 4.0);
@@ -232,7 +251,7 @@ mod matrix_tests {
     ///A 2x2 matrix ought to be representable
     fn matrix_2x2_creation() {
         let data_vector = vec![-3.0, 5.0, 1.0, -2.0];
-        let m = Matrix::new_matrix_with_data(2, data_vector);
+        let m = Matrix::with_data(2, data_vector);
 
         assert_eq!(m.element(0, 0), -3.0);
         assert_eq!(m.element(0, 1), 5.0);
@@ -244,7 +263,7 @@ mod matrix_tests {
     ///A 3x matrix ought to be representable
     fn matrix_3x3_creation() {
         let data_vector = vec![-3.0, 5.0, 0.0, 1.0, -2.0, -7.0, 0.0, 1.0, 1.0];
-        let m = Matrix::new_matrix_with_data(3, data_vector);
+        let m = Matrix::with_data(3, data_vector);
 
         assert_eq!(m.element(0, 0), -3.0);
         assert_eq!(m.element(1, 1), -2.0);
@@ -257,11 +276,11 @@ mod matrix_tests {
         let data_vector_a = vec![
             1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0,
         ];
-        let ma = Matrix::new_matrix_with_data(4, data_vector_a);
+        let ma = Matrix::with_data(4, data_vector_a);
         let data_vector_b = vec![
             1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0,
         ];
-        let mb = Matrix::new_matrix_with_data(4, data_vector_b);
+        let mb = Matrix::with_data(4, data_vector_b);
 
         assert_eq!(ma, mb);
     }
@@ -272,11 +291,11 @@ mod matrix_tests {
         let data_vector_a = vec![
             1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0,
         ];
-        let ma = Matrix::new_matrix_with_data(4, data_vector_a);
+        let ma = Matrix::with_data(4, data_vector_a);
         let data_vector_b = vec![
             1.0, 6.0, 7.0, 4.0, 2.0, 3.0, 4.0, 5.0, 8.0, 9.0, 8.0, 7.0, 6.0, 5.0, 3.0, 2.0,
         ];
-        let mb = Matrix::new_matrix_with_data(4, data_vector_b);
+        let mb = Matrix::with_data(4, data_vector_b);
 
         assert_ne!(ma, mb);
     }
@@ -287,17 +306,17 @@ mod matrix_tests {
         let data_vector_a = vec![
             1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0,
         ];
-        let ma = Matrix::new_matrix_with_data(4, data_vector_a);
+        let ma = Matrix::with_data(4, data_vector_a);
         let data_vector_b = vec![
             -2.0, 1.0, 2.0, 3.0, 3.0, 2.0, 1.0, -1.0, 4.0, 3.0, 6.0, 5.0, 1.0, 2.0, 7.0, 8.0,
         ];
-        let mb = Matrix::new_matrix_with_data(4, data_vector_b);
+        let mb = Matrix::with_data(4, data_vector_b);
 
         let data_vector_result = vec![
             20.0, 22.0, 50.0, 48.0, 44.0, 54.0, 114.0, 108.0, 40.0, 58.0, 110.0, 102.0, 16.0, 26.0,
             46.0, 42.0,
         ];
-        let m_result = Matrix::new_matrix_with_data(4, data_vector_result);
+        let m_result = Matrix::with_data(4, data_vector_result);
 
         assert_eq!(ma * mb, m_result);
     }
@@ -308,11 +327,11 @@ mod matrix_tests {
         let data_vector_a = vec![
             1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0,
         ];
-        let ma = Matrix::new_matrix_with_data(4, data_vector_a);
+        let ma = Matrix::with_data(4, data_vector_a);
         let data_vector_identity = vec![
             1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
         ];
-        let mb = Matrix::new_matrix_with_data(4, data_vector_identity);
+        let mb = Matrix::with_data(4, data_vector_identity);
 
         let result = ma.clone();
         assert_eq!(ma * mb, result);
@@ -324,7 +343,7 @@ mod matrix_tests {
         let data_vector_a = vec![
             1.0, 2.0, 3.0, 4.0, 2.0, 4.0, 4.0, 2.0, 8.0, 6.0, 4.0, 1.0, 0.0, 0.0, 0.0, 1.0,
         ];
-        let ma = Matrix::new_matrix_with_data(4, data_vector_a);
+        let ma = Matrix::with_data(4, data_vector_a);
 
         let tuple = Tuple::new_point(1.0, 2.0, 3.0);
         let tuple_res = Tuple::new_point(18.0, 24.0, 33.0);
@@ -336,7 +355,7 @@ mod matrix_tests {
     /// Calculating the determinant of a 2x2 matrix
     fn matrix_determinant_2x2_matrix() {
         let data_vector_a = vec![1.0, 5.0, -3.0, 2.0];
-        let ma = Matrix::new_matrix_with_data(2, data_vector_a);
+        let ma = Matrix::with_data(2, data_vector_a);
 
         assert_eq!(ma.determinant(), 17.0);
     }
@@ -347,19 +366,19 @@ mod matrix_tests {
         let data_vector_a = vec![
             0.0, 9.0, 3.0, 0.0, 9.0, 8.0, 0.0, 8.0, 1.0, 8.0, 5.0, 3.0, 0.0, 0.0, 5.0, 8.0,
         ];
-        let ma = Matrix::new_matrix_with_data(4, data_vector_a);
+        let ma = Matrix::with_data(4, data_vector_a);
 
         let data_vector_b = vec![
             0.0, 9.0, 1.0, 0.0, 9.0, 8.0, 8.0, 0.0, 3.0, 0.0, 5.0, 5.0, 0.0, 8.0, 3.0, 8.0,
         ];
-        let mb = Matrix::new_matrix_with_data(4, data_vector_b);
+        let mb = Matrix::with_data(4, data_vector_b);
 
         assert_eq!(ma.transpose(), mb);
 
         let data_vector_identity = vec![
             1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
         ];
-        let m_ident = Matrix::new_matrix_with_data(4, data_vector_identity);
+        let m_ident = Matrix::with_data(4, data_vector_identity);
 
         assert_eq!(m_ident.transpose(), m_ident);
     }
@@ -368,20 +387,20 @@ mod matrix_tests {
     /// Subtracting matrixes
     fn sub_matrix() {
         let data_vector_a = vec![1.0, 5.0, 0.0, -3.0, 2.0, 7.0, 0.0, 6.0, -3.0];
-        let ma = Matrix::new_matrix_with_data(3, data_vector_a);
+        let ma = Matrix::with_data(3, data_vector_a);
 
         let data_vector_b = vec![-3.0, 2.0, 0.0, 6.0];
-        let mb = Matrix::new_matrix_with_data(2, data_vector_b);
+        let mb = Matrix::with_data(2, data_vector_b);
 
         assert_eq!(ma.sub_matix(0, 2), mb);
 
         let data_vector_c = vec![
             0.0, 9.0, 3.0, 0.0, 9.0, 8.0, 0.0, 8.0, 1.0, 8.0, 5.0, 3.0, 0.0, 0.0, 5.0, 8.0,
         ];
-        let mc = Matrix::new_matrix_with_data(4, data_vector_c);
+        let mc = Matrix::with_data(4, data_vector_c);
 
         let data_vector_d = vec![0.0, 3.0, 0.0, 9.0, 0.0, 8.0, 0.0, 5.0, 8.0];
-        let md = Matrix::new_matrix_with_data(3, data_vector_d);
+        let md = Matrix::with_data(3, data_vector_d);
         assert_eq!(mc.sub_matix(2, 1), md);
     }
 
@@ -389,7 +408,7 @@ mod matrix_tests {
     ///Calculating a minor of a 3x3 matrix
     fn minor() {
         let data_vector_a = vec![1.0, 5.0, 0.0, -3.0, 2.0, 7.0, 0.0, 6.0, -3.0];
-        let ma = Matrix::new_matrix_with_data(3, data_vector_a);
+        let ma = Matrix::with_data(3, data_vector_a);
         let mb = ma.sub_matix(1, 0);
 
         assert_eq!(ma.minor(1, 0), mb.determinant());
@@ -399,7 +418,7 @@ mod matrix_tests {
     ///Calculating a minor of a 3x3 matrix
     fn cofactor() {
         let data_vector_a = vec![3.0, 5.0, 0.0, 2.0, -1.0, -7.0, 6.0, -1.0, 5.0];
-        let ma = Matrix::new_matrix_with_data(3, data_vector_a);
+        let ma = Matrix::with_data(3, data_vector_a);
 
         assert_eq!(ma.minor(0, 0), -12.0);
         assert_eq!(ma.cofactor(0, 0), -12.0);
@@ -412,7 +431,7 @@ mod matrix_tests {
     ///Calculating the determinant of a 3x3 matrix
     fn determinant() {
         let data_vector_a = vec![1.0, 2.0, 6.0, -5.0, 8.0, -4.0, 2.0, 6.0, 4.0];
-        let ma = Matrix::new_matrix_with_data(3, data_vector_a);
+        let ma = Matrix::with_data(3, data_vector_a);
 
         assert_eq!(ma.cofactor(0, 0), 56.0);
         assert_eq!(ma.cofactor(0, 1), 12.0);
@@ -422,7 +441,7 @@ mod matrix_tests {
         let data_vector_b = vec![
             -2.0, -8.0, 3.0, 5.0, -3.0, 1.0, 7.0, 3.0, 1.0, 2.0, -9.0, 6.0, -6.0, 7.0, 7.0, -9.0,
         ];
-        let mb = Matrix::new_matrix_with_data(4, data_vector_b);
+        let mb = Matrix::with_data(4, data_vector_b);
 
         assert_eq!(mb.cofactor(0, 0), 690.0);
         assert_eq!(mb.cofactor(0, 1), 447.0);
@@ -437,14 +456,14 @@ mod matrix_tests {
         let data_vector_a = vec![
             -2.0, -8.0, 3.0, 5.0, -3.0, 1.0, 7.0, 3.0, 1.0, 2.0, -9.0, 6.0, -6.0, 7.0, 7.0, -9.0,
         ];
-        let ma = Matrix::new_matrix_with_data(4, data_vector_a);
+        let ma = Matrix::with_data(4, data_vector_a);
         assert_eq!(ma.determinant(), -4071.0);
         assert!(ma.is_invertible());
 
         let data_vector_b = vec![
             -4.0, 2.0, -2.0, -3.0, 9.0, 6.0, 2.0, 6.0, 0.0, -5.0, 1.0, -5.0, 0.0, 0.0, 0.0, 0.0,
         ];
-        let mb = Matrix::new_matrix_with_data(4, data_vector_b);
+        let mb = Matrix::with_data(4, data_vector_b);
         assert_eq!(mb.determinant(), 0.0);
         assert!(!mb.is_invertible());
     }
@@ -455,7 +474,7 @@ mod matrix_tests {
         let data_vector_a = vec![
             -5.0, 2.0, 6.0, -8.0, 1.0, -5.0, 1.0, 8.0, 7.0, 7.0, -6.0, -7.0, 1.0, -3.0, 7.0, 4.0,
         ];
-        let ma = Matrix::new_matrix_with_data(4, data_vector_a);
+        let ma = Matrix::with_data(4, data_vector_a);
         let mb = ma.inverse().unwrap();
 
         assert_eq!(ma.determinant(), 532.0);
@@ -479,7 +498,7 @@ mod matrix_tests {
             -0.3007518796992481,
             0.30639097744360905,
         ];
-        let mb_test = Matrix::new_matrix_with_data(4, data_vector_b_test);
+        let mb_test = Matrix::with_data(4, data_vector_b_test);
         assert_eq!(mb, mb_test);
     }
 }

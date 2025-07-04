@@ -1,32 +1,36 @@
 mod camera;
 mod canvas;
 mod color;
+mod drivers;
 mod error;
 mod matrix;
-mod drivers;
+mod pattern;
 mod ppm;
 mod ray;
 mod reflection;
+mod refraction;
 mod shape;
 mod transformation;
 mod tuple;
 mod utils;
-mod pattern;
-mod refraction;
 mod world;
 
 use std::f64::consts::PI;
 
 use camera::Camera;
 use color::Color;
+use drivers::minifb_driver;
 use minifb::Key;
 use reflection::Material;
 use shape::{plane::Plane, shape::Shape, sphere::Sphere};
 use transformation::{create_rotation_x, create_scaling, create_translation, view_transform};
 use world::World;
-use drivers::minifb_driver;
 
-use crate::{color::{BLACK, WHITE}, pattern::Pattern, tuple::*};
+use crate::{
+    color::{BLACK, WHITE},
+    pattern::Pattern,
+    tuple::*,
+};
 
 // TODO
 // Better Unwrap
@@ -49,7 +53,6 @@ fn main() {
     left_wall.material = floor.material.set_reflective(0.8).clone();
     floor.material.pattern = Some(Pattern::new_checker_pattern(WHITE, BLACK));
 
-
     //rigth wall
     let mut right_wall = Plane::plane();
     right_wall.set_transform(
@@ -58,18 +61,34 @@ fn main() {
             .translation(0.0, 0.0, 5.0),
     );
     right_wall.material = right_wall.material.set_reflective(0.9).clone();
-    right_wall.material.pattern = Some (Pattern::new_radial_gradiant_pattern(color::BLACK, color::WHITE));
+    right_wall.material.pattern = Some(Pattern::new_radial_gradiant_pattern(
+        color::BLACK,
+        color::WHITE,
+    ));
 
     //large sphere
     let mut middle = Sphere::sphere();
     middle.set_transform(&create_translation(-0.5, 1.0, 0.5));
-    middle.material = Material::default_material().set_reflective(1.0).clone();
+    middle.material = Material::default_material().clone();
     middle.material.color = Color::new_color(0.1, 1.0, 0.5);
     middle.material.diffuse = 0.7;
     middle.material.specular = 0.3;
-    middle.material.pattern = Some (Pattern::new_checker_pattern(color::AZURE_BLUE, color::WHITE));
-    middle.set_refractive_index(1.5);
-    middle.set_transparency(1.0);
+    middle.material.pattern = Some(Pattern::new_checker_pattern(
+        color::AZURE_BLUE,
+        color::WHITE,
+    ));
+    middle.set_refractive_index(2.5);
+    middle.set_transparency(0.9);
+
+    //middle inner sphere
+    let mut middle_inner = Sphere::sphere();
+    middle_inner.set_transform(&create_translation(-0.5, 1.0, 0.5).scaling(0.5, 0.5, 0.5));
+    middle_inner.material = Material::default_material().set_reflective(0.5).clone();
+    middle_inner.material.color = Color::new_color(1.0, 0.0, 0.0);
+    middle_inner.material.diffuse = 0.7;
+    middle_inner.material.specular = 0.3;
+    middle_inner.set_refractive_index(1.5);
+    middle_inner.set_transparency(0.5);
 
     //small sphere
     let mut right = Sphere::sphere();
@@ -78,7 +97,10 @@ fn main() {
     right.material.color = Color::new_color(0.5, 1.0, 0.1);
     right.material.diffuse = 0.7;
     right.material.specular = 0.3;
-    right.material.pattern = Some (Pattern::new_stripe_pattern(color::AZURE_BLUE, color::LIGHT_VIOLET));
+    right.material.pattern = Some(Pattern::new_stripe_pattern(
+        color::AZURE_BLUE,
+        color::LIGHT_VIOLET,
+    ));
     right.set_refractive_index(1.5);
     right.set_transparency(0.6);
 
@@ -99,6 +121,7 @@ fn main() {
         Box::new(middle),
         Box::new(right),
         Box::new(left),
+        Box::new(middle_inner),
     ];
 
     //ligth source
@@ -108,8 +131,8 @@ fn main() {
     world.light_sources.push(light.clone());
 
     //camera
-    let canvas_size_pixels_width = 800;
-    let canvas_size_pixels_height = 500;
+    let canvas_size_pixels_width = 1800;
+    let canvas_size_pixels_height = 1000;
     let mut camera = Camera::new(
         canvas_size_pixels_width,
         canvas_size_pixels_height,

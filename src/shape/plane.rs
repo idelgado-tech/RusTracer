@@ -4,7 +4,7 @@ use uuid::Uuid;
 use crate::ray::{Intersection, Ray};
 use crate::reflection::Material;
 use crate::tuple::{Tuple};
-use crate::matrix::Matrix;
+use crate::matrix::{memoized_inverse, Matrix};
 
 use super::shape::Shape;
 
@@ -27,11 +27,11 @@ impl Plane {
 
 impl Shape for Plane {
     fn local_normal_at(&self, p: Tuple) -> Tuple {
-        self.transform.inverse().unwrap() * Tuple::new_vector(0.0, 1.0, 0.0)
+        memoized_inverse(self.transform.clone()).unwrap() * Tuple::new_vector(0.0, 1.0, 0.0)
     }
 
     fn local_intersect(& mut self, local_ray: Ray) -> Vec<Intersection> {
-        let transformed_ray = local_ray.transform(&self.transform.inverse().unwrap());
+        let transformed_ray = local_ray.transform(&memoized_inverse(self.transform.clone()).unwrap());
         if transformed_ray.direction.y.abs() < 0.00001 {
             vec![]
         } else {
