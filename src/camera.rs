@@ -1,6 +1,19 @@
-use indicatif::{ProgressBar, ProgressStyle};
+use std::sync::{Arc, Mutex};
 
-use crate::{canvas::Canvas, matrix::Matrix, ray::Ray, reflection, tuple::Tuple, world::World};
+use indicatif::{ParallelProgressIterator, ProgressBar, ProgressStyle};
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use rayon::prelude::*;
+
+use crate::{
+    canvas::Canvas,
+    color::{self, Color},
+    matrix::Matrix,
+    ray::Ray,
+    reflection,
+    tuple::Tuple,
+    utils,
+    world::World,
+};
 
 ///virtual camera
 #[derive(Debug, Clone)]
@@ -65,14 +78,17 @@ impl Camera {
         Ray::new(origin, direction)
     }
 
+    fn color_at(&self, world: &World, col: usize, row: usize) -> Color {
+        let ray = self.ray_for_pixel(col, row);
+        world.color_at(&ray, 5)
+    }
+
     pub fn render(&self, world: World) -> Canvas {
         let mut image = Canvas::new_canvas(self.hsize, self.vsize);
         println!("Starting render");
         for y in 0..self.vsize {
             for x in 0..self.hsize {
-                let ray = self.ray_for_pixel(x, y);
-                let color = world.color_at(&ray,reflection::MAX_RECURTION);
-                image.set_pixel_color(x, y, color);
+                image.set_pixel_color(x, y, self.color_at(&world, x, y));
             }
         }
         image
@@ -86,16 +102,45 @@ impl Camera {
             ProgressStyle::with_template("{bar:120} [{percent_precise}%] [T : {elapsed:}]")
                 .unwrap(),
         );
+
         for y in 0..self.vsize {
             for x in 0..self.hsize {
-                let ray = self.ray_for_pixel(x, y);
-                let color = world.color_at(&ray,reflection::MAX_RECURTION);
-                image.set_pixel_color(x, y, color);
+                image.set_pixel_color(x, y, self.color_at(&world, x, y));
             }
             bar.inc(self.hsize as u64);
         }
+
         println!("Done rendering");
         image
+    }
+
+    pub fn render_par_with_update_bar(&self, world: World) -> Canvas {
+        const BAND_SIZE: usize = 10;
+        let mut image2 = Canvas::new_canvas(self.hsize, self.vsize);
+
+        println!("Starting render");
+        let pixels_num = self.vsize * self.hsize;
+
+        let bar_style =
+            ProgressStyle::with_template("{bar:120} [{percent_precise}%] [T : {elapsed:}]")
+                .unwrap();
+
+        // image2
+        //     .pixels()
+        //     .par_chunks_mut(self.hsize * BAND_SIZE)
+        //     .enumerate()
+        //     // .progress_with_style(bar_style)
+        //     .for_each(|(i, band)| {
+        //         for row in 0..BAND_SIZE {
+        //             for col in 0..self.hsize {
+        //                 band[row * self.hsize + col] =
+        //                     self.color_at(&world, col, row + i * BAND_SIZE);
+        //             }
+        //         }
+        //     });
+
+        println!("Done rendering");
+        image2
     }
 }
 

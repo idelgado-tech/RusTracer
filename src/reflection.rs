@@ -32,7 +32,7 @@ pub struct Material {
     pub shininess: f64,
     pub pattern: Option<Pattern>,
     pub reflective: f64,
-    pub transparancy: f64,
+    pub transparency: f64,
     pub refractive_index: f64,
 }
 
@@ -46,7 +46,7 @@ impl Material {
             shininess: 200.0,
             pattern: None,
             reflective: 0.0,
-            transparancy: 0.0,
+            transparency: 0.0,
             refractive_index: 1.0,
         }
     }
@@ -70,14 +70,39 @@ impl Material {
             shininess,
             pattern,
             reflective,
-            transparancy,
+            transparency: transparancy,
             refractive_index,
         }
     }
 
     pub fn set_reflective(&mut self, reflective: f64) -> &Material {
         self.reflective = reflective;
-        return self;
+        self
+    }
+
+    pub fn set_transparency(&mut self, transparency: f64) -> &Material {
+        self.transparency = transparency;
+        self
+    }
+
+    pub fn set_refractive_index(&mut self, refractive_index: f64) -> &Material {
+        self.refractive_index = refractive_index;
+        self
+    }
+
+    pub fn set_ambiant(&mut self, ambiant: f64) -> &Material {
+        self.ambiant = ambiant;
+        self
+    }
+
+    pub fn set_pattern(&mut self, pattern: Pattern) -> &Material {
+        self.pattern = Some(pattern);
+        self
+    }
+
+    pub fn set_color(&mut self, color: Color) -> &Material {
+        self.color = color;
+        self
     }
 }
 
@@ -128,7 +153,7 @@ mod matrix_tests {
         ray::{Intersection, Ray},
         shape::{plane::Plane, sphere::Sphere},
         transformation,
-        world::{World, prepare_computations},
+        world::{World, prepare_computations_helper},
     };
 
     use super::*;
@@ -160,7 +185,7 @@ mod matrix_tests {
     ///Transparency and Refractive Index for the default material
     fn refractive_material_creation() {
         let material = Material::default_material();
-        assert_eq!(material.transparancy, 0.0);
+        assert_eq!(material.transparency, 0.0);
         assert_eq!(material.refractive_index, 1.0);
     }
 
@@ -323,7 +348,7 @@ mod matrix_tests {
             Tuple::new_vector(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0),
         );
         let i = Intersection::new(2.0_f64.sqrt(), Box::new(shape));
-        let comps = prepare_computations(&i, &r);
+        let comps = prepare_computations_helper(&i, &r);
         assert_eq!(
             comps.reflectv,
             Tuple::new_vector(0.0, 2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0)
@@ -344,7 +369,7 @@ mod matrix_tests {
         shape.get_material().ambiant = 1.0;
         let i = Intersection::new(1.0, shape);
 
-        let comps = prepare_computations(&i, &r);
+        let comps = prepare_computations_helper(&i, &r);
         let color = w.reflected_color(comps, MAX_RECURTION);
         assert_eq!(color, Color::new_color(0.0, 0.0, 0.0));
     }
@@ -365,7 +390,7 @@ mod matrix_tests {
 
         let i = Intersection::new(2.0_f64.sqrt(), w.objects.last().unwrap().to_owned());
 
-        let comps = prepare_computations(&i, &r);
+        let comps = prepare_computations_helper(&i, &r);
         let color = w.reflected_color(comps, MAX_RECURTION);
 
         assert_eq!(
@@ -390,7 +415,7 @@ mod matrix_tests {
 
         let i = Intersection::new(2.0_f64.sqrt(), w.objects.last().unwrap().to_owned());
 
-        let comps = prepare_computations(&i, &r);
+        let comps = prepare_computations_helper(&i, &r);
         let color = w.shade_hit(&comps, MAX_RECURTION);
 
         assert_eq!(
@@ -448,7 +473,7 @@ mod matrix_tests {
 
         let i = Intersection::new(2.0_f64.sqrt(), w.objects.last().unwrap().to_owned());
 
-        let comps = prepare_computations(&i, &r);
+        let comps = prepare_computations_helper(&i, &r);
         let color = w.reflected_color(comps, 0);
 
         assert_eq!(color, BLACK);

@@ -8,7 +8,7 @@
 
 ## chapters
 - [X] chapter 10 : Patterns
-- [ ] chapter 11 : Reflection and Refraction
+- [X] chapter 11 : Reflection and Refraction
 - [ ] chapter 12 : Cubes
 - [ ] chapter 13 : Cylinders
 - [ ] chapter 14 : Groups
@@ -29,7 +29,8 @@
 - [ ] Allow to save Images
 - [ ] Add GUI
 - [ ] Clean style
-- [ ] Up Rust version
+- [X] Up Rust version
+- [ ] MAde interactive REPL
 
 ## Some samples
 

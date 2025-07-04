@@ -68,6 +68,8 @@ fn main() {
     middle.material.diffuse = 0.7;
     middle.material.specular = 0.3;
     middle.material.pattern = Some (Pattern::new_checker_pattern(color::AZURE_BLUE, color::WHITE));
+    middle.set_refractive_index(1.5);
+    middle.set_transparency(1.0);
 
     //small sphere
     let mut right = Sphere::sphere();
@@ -77,6 +79,8 @@ fn main() {
     right.material.diffuse = 0.7;
     right.material.specular = 0.3;
     right.material.pattern = Some (Pattern::new_stripe_pattern(color::AZURE_BLUE, color::LIGHT_VIOLET));
+    right.set_refractive_index(1.5);
+    right.set_transparency(0.6);
 
     //smaller sphere
     let mut left = Sphere::sphere();
@@ -104,8 +108,8 @@ fn main() {
     world.light_sources.push(light.clone());
 
     //camera
-    let canvas_size_pixels_width = 1500;
-    let canvas_size_pixels_height = 1000;
+    let canvas_size_pixels_width = 800;
+    let canvas_size_pixels_height = 500;
     let mut camera = Camera::new(
         canvas_size_pixels_width,
         canvas_size_pixels_height,
@@ -119,6 +123,8 @@ fn main() {
 
     //render result to a canvas
     let canvas = camera.render_with_update_bar(world);
+    // let canvas = camera.render_par_with_update_bar(world);
+
     let buffer = minifb_driver::buffer_from_canvas(&canvas);
     let mut window = minifb_driver::new_window(&canvas);
 
@@ -126,8 +132,7 @@ fn main() {
         .update_with_buffer(&buffer, canvas_size_pixels_width, canvas_size_pixels_height)
         .unwrap();
 
-    // Limit to max ~60 fps update rate
-    window.limit_update_rate(Some(std::time::Duration::from_micros(16600)));
+    window.set_target_fps(60);
     while window.is_open() && !window.is_key_down(Key::Escape) {
         // We unwrap here as we want this code to exit if it fails. Real applications may want to handle this in a different way
         window

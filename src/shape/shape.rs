@@ -1,25 +1,12 @@
 use std::fmt::{Debug, Formatter};
 
+use crate::color::Color;
+use crate::pattern::Pattern;
 use crate::ray::{Intersection, Ray};
 use crate::{matrix::Matrix, reflection};
 
 use crate::{reflection::Material, tuple::*};
 use uuid::Uuid;
-
-static mut SAVED_RAY: Ray = Ray {
-    direction: Tuple {
-        x: 0.0,
-        y: 0.0,
-        z: 0.0,
-        w: W::Point,
-    },
-    origin: Tuple {
-        x: 0.0,
-        y: 0.0,
-        z: 0.0,
-        w: W::Point,
-    },
-};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ShapeTest {
@@ -60,7 +47,7 @@ pub trait Shape {
     fn normal_at(&self, point: Tuple) -> Tuple {
         self.local_normal_at(point)
     }
-    
+
     fn local_intersect(&mut self, local_ray: Ray) -> Vec<Intersection>;
     fn local_normal_at(&self, point: Tuple) -> Tuple;
 
@@ -70,11 +57,38 @@ pub trait Shape {
     fn get_transform(&self) -> Matrix;
     fn set_transform(&mut self, new_stransform: &Matrix);
 
+    // material
     fn get_material(&self) -> Material;
     fn set_material(&mut self, new_material: &Material);
-    
+
+    fn set_transparency(&mut self, transparency: f64) {
+        self.set_material(self.get_material().set_transparency(transparency));
+    }
+
+    fn set_refractive_index(&mut self, refractive_index: f64) {
+        self.set_material(self.get_material().set_refractive_index(refractive_index));
+    }
+
+    fn set_ambiant(&mut self, ambiant: f64) {
+        self.set_material(self.get_material().set_ambiant(ambiant));
+    }
+
+    fn set_pattern(&mut self, pattern: Pattern) {
+        self.set_material(self.get_material().set_pattern(pattern));
+    }
+
+    fn set_reflective(&mut self, reflection: f64) {
+        self.set_material(self.get_material().set_reflective(reflection));
+    }
+
+    fn set_color(&mut self, color: Color) {
+        self.set_material(self.get_material().set_color(color));
+    }
+
+
     fn get_id(&self) -> Uuid;
 }
+
 
 impl Shape for ShapeTest {
     fn local_intersect(&mut self, local_ray: Ray) -> Vec<Intersection> {
@@ -198,10 +212,9 @@ mod transformation_tests {
         let mut s = ShapeTest::test_shape();
         s.set_transform(&transformation::create_scaling(2.0, 2.0, 2.0));
         let _: Vec<Intersection> = s.intersect(r);
-        unsafe {
-            assert_eq!(s.saved_ray.origin.clone(), Tuple::new_point(0.0, 0.0, -2.5));
-            assert_eq!(s.saved_ray.direction, Tuple::new_vector(0.0, 0.0, 0.5));
-        }
+
+        assert_eq!(s.saved_ray.origin.clone(), Tuple::new_point(0.0, 0.0, -2.5));
+        assert_eq!(s.saved_ray.direction, Tuple::new_vector(0.0, 0.0, 0.5));
     }
 
     #[test]
@@ -214,10 +227,9 @@ mod transformation_tests {
         let mut s = ShapeTest::test_shape();
         s.set_transform(&transformation::create_translation(5.0, 0.0, 0.0));
         let _: Vec<Intersection> = s.intersect(r);
-        unsafe {
-            assert_eq!(s.saved_ray.origin, Tuple::new_point(-5.0, 0.0, -5.0));
-            assert_eq!(s.saved_ray.direction, Tuple::new_vector(0.0, 0.0, 1.0));
-        }
+
+        assert_eq!(s.saved_ray.origin, Tuple::new_point(-5.0, 0.0, -5.0));
+        assert_eq!(s.saved_ray.direction, Tuple::new_vector(0.0, 0.0, 1.0));
     }
 
     #[test]

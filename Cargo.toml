@@ -12,7 +12,8 @@ edition = "2024"
 [dependencies]
 minifb = "0.28"
 serde = "1.0.133"
-indicatif = "0.17.8"
+indicatif =  {version = "0.17.8", features = ["rayon"]}
+rayon = "1.10.0"
 
 [dependencies.uuid]
 version = "1.1.2"

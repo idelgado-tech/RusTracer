@@ -87,9 +87,9 @@ impl Pattern {
         Pattern::new(color_a, color_b, fonction)
     }
 
-    // ADD Nested patterns
-    // ADD Blended patterns
-    // ADD Perturbed patterns
+    //TODO ADD Nested patterns
+    //TODO ADD Blended patterns
+    //TODO ADD Perturbed patterns
 
     pub fn new_ring_pattern(color_a: Color, color_b: Color) -> Pattern {
         let fonction = |pattern: &Pattern, point: Tuple| {

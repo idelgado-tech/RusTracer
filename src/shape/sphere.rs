@@ -16,6 +16,8 @@ pub struct Sphere {
     pub id: Uuid,
 }
 
+
+
 impl Sphere {
     pub fn sphere() -> Sphere {
         Sphere {
@@ -29,7 +31,7 @@ impl Sphere {
 
     pub fn new_glass_sphere() -> Sphere {
         let mut material = Material::default_material();
-        material.transparancy = 1.0;
+        material.transparency = 1.0;
         material.refractive_index = 1.5;
 
         Sphere {
@@ -111,7 +113,7 @@ mod sphere_tests {
         let s = Sphere::new_glass_sphere();
 
         assert_eq!(s.transform, Matrix::new_identity_matrix(4));
-        assert_eq!(s.material.transparancy, 1.0);
+        assert_eq!(s.material.transparency, 1.0);
         assert_eq!(s.material.refractive_index, 1.5);
     }
 

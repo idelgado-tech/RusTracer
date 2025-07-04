@@ -71,7 +71,7 @@ impl World {
 
         for light in &self.light_sources {
             let is_shadow = self.is_shadowed_for_light(&comps.over_point, light);
-            shade += lighting(
+            let surface = lighting(
                 &comps.object.get_material(),
                 light,
                 &comps.over_point,
@@ -80,8 +80,19 @@ impl World {
                 is_shadow,
                 &comps.object.clone(),
             );
-            shade += self.reflected_color(comps.clone(), remaining_calculations);
+
+            let reflected = self.reflected_color(comps.clone(), remaining_calculations);
+
+            let refracted = self.refracted_color(comps.clone(), remaining_calculations);
+            let material = comps.object.get_material();
+            if material.reflective > 0.0 && material.transparency > 0.0 {
+                let reflectance = comps.schlick();
+                shade += surface + reflected * reflectance + refracted * (1.0 - reflectance);
+            } else {
+                shade += surface + reflected + refracted;
+            }
         }
+
         shade
     }
 
@@ -91,7 +102,8 @@ impl World {
         if intersections.is_empty() {
             return color::BLACK;
         }
-        let comps = prepare_computations(&intersections[0], ray);
+
+        let comps = prepare_computations_v2(&intersections[0], ray, intersections.clone());
         self.shade_hit(&comps, remaining_calculations)
     }
 
@@ -116,6 +128,7 @@ pub struct Computation {
     pub object: Box<dyn Shape>,
     pub point: Tuple,
     pub over_point: Tuple,
+    pub under_point: Tuple,
     pub eyev: Tuple,
     pub normalv: Tuple,
     pub inside: bool,
@@ -130,6 +143,7 @@ impl PartialEq for Computation {
             && self.object == other.object.clone()
             && self.point == other.point
             && self.over_point == other.over_point
+            && self.under_point == other.under_point
             && self.eyev == other.eyev
             && self.normalv == other.normalv
             && self.inside == other.inside
@@ -146,6 +160,7 @@ impl Computation {
             object: Sphere::sphere().box_clone(),
             point: Tuple::new_point(0.0, 0.0, 0.0),
             over_point: Tuple::new_point(0.0, 0.0, 0.0),
+            under_point: Tuple::new_point(0.0, 0.0, 0.0),
             eyev: Tuple::new_vector(0.0, 0.0, 0.0),
             normalv: Tuple::new_vector(0.0, 0.0, 0.0),
             inside: true,
@@ -156,7 +171,7 @@ impl Computation {
     }
 }
 
-pub fn prepare_computations(intersection: &Intersection, ray: &Ray) -> Computation {
+pub fn prepare_computations_helper(intersection: &Intersection, ray: &Ray) -> Computation {
     let mut comps = Computation::new();
 
     comps.t = intersection.t;
@@ -174,6 +189,8 @@ pub fn prepare_computations(intersection: &Intersection, ray: &Ray) -> Computati
     }
 
     comps.over_point = comps.point.clone() + comps.normalv.clone() * SHADOW_EPSILON;
+    comps.under_point = comps.point.clone() - comps.normalv.clone() * SHADOW_EPSILON;
+
     comps
 }
 
@@ -182,24 +199,7 @@ pub fn prepare_computations_v2(
     ray: &Ray,
     intersection_list: Vec<Intersection>,
 ) -> Computation {
-    let mut comps = Computation::new();
-
-    comps.t = intersection.t;
-    comps.object = intersection.object.clone();
-    comps.point = ray.position(comps.t);
-    comps.eyev = ray.direction.clone() * -1.0;
-    comps.normalv = comps.object.normal_at(comps.point.clone());
-    comps.reflectv = reflect(&ray.direction.clone(), &comps.normalv);
-
-    if Tuple::dot_product(&comps.normalv, &comps.eyev) < 0.0 {
-        comps.inside = true;
-        comps.normalv = comps.normalv * -1.0;
-    } else {
-        comps.inside = false;
-    }
-
-    comps.over_point = comps.point.clone() + comps.normalv.clone() * SHADOW_EPSILON;
-
+    let mut comps = prepare_computations_helper(intersection, ray);
     let mut container: Vec<Box<dyn Shape>> = Vec::new();
 
     for i in intersection_list {
@@ -211,7 +211,6 @@ pub fn prepare_computations_v2(
                 comps.n1 = container.last().unwrap().get_material().refractive_index
             }
         }
-
         let find_item = container.iter().position(|n| *n == i.object.box_owned());
 
         match find_item {
@@ -225,9 +224,9 @@ pub fn prepare_computations_v2(
             if container.is_empty() {
                 comps.n2 = 1.0;
             } else {
-
                 comps.n2 = container.last().unwrap().get_material().refractive_index
             }
+
             break;
         }
     }
@@ -299,7 +298,7 @@ mod matrix_tests {
             object: Box::new(Sphere::sphere()),
             t: 4.0,
         };
-        let comps = prepare_computations(&i, &ray);
+        let comps = prepare_computations_helper(&i, &ray);
 
         assert_eq!(comps.t, i.t);
         assert!((comps.object == i.object));
@@ -319,7 +318,7 @@ mod matrix_tests {
             object: Sphere::sphere().box_clone(),
             t: 4.0,
         };
-        let comps = prepare_computations(&i, &ray);
+        let comps = prepare_computations_helper(&i, &ray);
 
         assert_eq!(comps.inside, false);
     }
@@ -335,7 +334,7 @@ mod matrix_tests {
             object: Sphere::sphere().box_clone(),
             t: 4.0,
         };
-        let comps = prepare_computations(&i, &ray);
+        let comps = prepare_computations_helper(&i, &ray);
 
         assert_eq!(comps.eyev, Tuple::new_vector(0.0, 0.0, -1.0));
         assert_eq!(comps.normalv, Tuple::new_vector(0.0, 0.0, -1.0));
@@ -356,7 +355,7 @@ mod matrix_tests {
             object: shape.box_clone(),
             t: 4.0,
         };
-        let comps = prepare_computations(&i, &ray);
+        let comps = prepare_computations_helper(&i, &ray);
         let c = w.shade_hit(&comps, reflection::MAX_RECURTION);
 
         assert_eq!(
@@ -383,7 +382,7 @@ mod matrix_tests {
             object: shape.box_clone(),
             t: 0.5,
         };
-        let comps = prepare_computations(&i, &ray);
+        let comps = prepare_computations_helper(&i, &ray);
         let c = w.shade_hit(&comps, reflection::MAX_RECURTION);
 
         assert_eq!(
@@ -502,7 +501,7 @@ mod matrix_tests {
             object: s2.box_clone(),
             t: 4.0,
         };
-        let comps = prepare_computations(&i, &ray);
+        let comps = prepare_computations_helper(&i, &ray);
         let c = w.shade_hit(&comps, reflection::MAX_RECURTION);
 
         assert_eq!(c, Color::new_color(0.1, 0.1, 0.1));
@@ -521,7 +520,7 @@ mod matrix_tests {
             object: s1.box_clone(),
             t: 5.0,
         };
-        let comps = prepare_computations(&i, &ray);
+        let comps = prepare_computations_helper(&i, &ray);
 
         assert_eq!(comps.over_point.z, -SHADOW_EPSILON);
         assert!(comps.point.z > comps.over_point.z);

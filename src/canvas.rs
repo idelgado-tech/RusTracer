@@ -42,6 +42,10 @@ impl Canvas {
     pub fn set_pixel_color(&mut self, x_pos: usize, y_pos: usize, color: Color) {
         self.pixels[index_from_pos(x_pos, y_pos, self.width)] = color;
     }
+
+     pub fn pixels(&mut self) -> &mut Vec<Color> {
+        &mut self.pixels
+    }
 }
 
 #[cfg(test)]
