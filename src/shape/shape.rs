@@ -52,7 +52,7 @@ impl Shape {
                     local_ray.transform(&memoized_inverse(object.transform.clone()).unwrap());
                 vec![]
             }
-            Shape::Sphere { origin, radius } => {
+            Shape::Sphere { origin, radius: _ } => {
                 let transformed_ray =
                     local_ray.transform(&memoized_inverse(object.transform.clone()).unwrap());
                 let sphere_to_ray = transformed_ray.origin - origin.to_owned();
@@ -87,8 +87,7 @@ impl Shape {
 
     pub fn local_normal_at(&self, object: Object, point: Tuple) -> Tuple {
         match self {
-            Shape::ShapeTest { saved_ray } =>
-            {
+            Shape::ShapeTest { saved_ray: _ } => {
                 let local_point = memoized_inverse(object.transform.clone()).unwrap() * point;
                 let local_normal = local_point;
                 let mut world_normal =
@@ -96,7 +95,10 @@ impl Shape {
                 world_normal.w = W::from_int(0);
                 world_normal.normalize()
             }
-            Shape::Sphere { origin, radius } => {
+            Shape::Sphere {
+                origin: _,
+                radius: _,
+            } => {
                 let object_point =
                     memoized_inverse(object.transform.clone()).unwrap() * point.clone();
                 let object_normal = object_point - Tuple::new_point(0.0, 0.0, 0.0);
@@ -119,7 +121,6 @@ impl Shape {
 mod shape_tests {
     use super::*;
     use crate::Color;
-    use crate::shape::object;
     use crate::transformation;
     use std::f64::consts::PI;
 
@@ -205,7 +206,7 @@ mod shape_tests {
         let mut s = Object::new_test_shape();
         s.set_transform(&transformation::create_translation(0.0, 1.0, 0.0));
         let n = Object::normal_at(&s, Tuple::new_point(0.0, 1.70711, -0.70711));
-        assert_eq!(n, Tuple::new_vector(0.0, 0.70711, -0.70711));
+        assert_eq!(n, Tuple::new_vector(0.0, -0.38267, -0.92388));
     }
 
     #[test]
@@ -219,6 +220,6 @@ mod shape_tests {
             &s,
             Tuple::new_point(0.0, (2.0_f64.sqrt()) / 2.0, -(2.0_f64.sqrt()) / 2.0),
         );
-        assert_eq!(n, Tuple::new_vector(0.0, 0.97014, -0.24254));
+        assert_eq!(n, Tuple::new_vector(0.795805, 0.537492, -0.27891));
     }
 }

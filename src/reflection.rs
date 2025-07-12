@@ -118,9 +118,9 @@ pub fn lighting(
     let color = match &material.pattern {
         Some(pattern) => pattern.color_at_object(&object, point.clone()),
         None => material.color,
-    };
-    let effective_color = color.clone() * light.intensity.clone();
-    let ambiant = effective_color.clone() * material.ambiant;
+    }; 
+    let effective_color = color* light.intensity;
+    let ambiant = effective_color * material.ambiant;
 
     if in_shadow {
         ambiant
@@ -140,7 +140,7 @@ pub fn lighting(
                 specular = BLACK;
             } else {
                 let factor = f64::powf(reflect_dot_eye, material.shininess);
-                specular = light.intensity.clone() * material.specular * factor;
+                specular = light.intensity * material.specular * factor;
             }
         }
         ambiant + diffuse + specular

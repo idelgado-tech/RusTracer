@@ -127,19 +127,19 @@ impl Camera {
             ProgressStyle::with_template("{bar:120} [{percent_precise}%] [T : {elapsed:}]")
                 .unwrap();
 
-        // image2
-        //     .pixels()
-        //     .par_chunks_mut(self.hsize * BAND_SIZE)
-        //     .enumerate()
-        //     .progress_with_style(bar_style)
-        //     .for_each(|(i, band)| {
-        //         for row in 0..BAND_SIZE {
-        //             for col in 0..self.hsize {
-        //                 band[row * self.hsize + col] =
-        //                     self.color_at(&world, col, row + i * BAND_SIZE);
-        //             }
-        //         }
-        //     });
+        image2
+            .pixels()
+            .par_chunks_mut(self.hsize * BAND_SIZE)
+            .enumerate()
+            .progress_with_style(bar_style)
+            .for_each(|(i, band)| {
+                for row in 0..BAND_SIZE {
+                    for col in 0..self.hsize {
+                        band[row * self.hsize + col] =
+                            self.color_at(&world, col, row + i * BAND_SIZE);
+                    }
+                }
+            });
 
         println!("Done rendering");
         image2

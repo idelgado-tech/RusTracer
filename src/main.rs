@@ -26,7 +26,10 @@ use transformation::{create_rotation_x, create_scaling, create_translation, view
 use world::World;
 
 use crate::{
-    color::{BLACK, WHITE}, pattern::Pattern, shape::object::Object, tuple::*
+    color::{BLACK, WHITE},
+    pattern::Pattern,
+    shape::object::Object,
+    tuple::*,
 };
 
 // TODO
@@ -78,7 +81,7 @@ fn main() {
     middle.set_transparency(0.9);
 
     //middle inner sphere
-    let mut middle_inner =  Object::new_sphere();
+    let mut middle_inner = Object::new_sphere();
     middle_inner.set_transform(&create_translation(-0.5, 1.0, 0.5).scaling(0.5, 0.5, 0.5));
     middle_inner.material = Material::default_material().set_reflective(0.5).clone();
     middle_inner.material.color = Color::new_color(1.0, 0.0, 0.0);
@@ -94,15 +97,15 @@ fn main() {
     right.material.color = Color::new_color(0.5, 1.0, 0.1);
     right.material.diffuse = 0.7;
     right.material.specular = 0.3;
-    right.material.pattern = Some(Pattern::new_stripe_pattern(
+    right.material.pattern = Some(Pattern::new_stripe_pattern(vec![
         color::AZURE_BLUE,
         color::LIGHT_VIOLET,
-    ));
+    ]));
     right.set_refractive_index(1.5);
     right.set_transparency(0.6);
 
     //smaller sphere
-    let mut left =  Object::new_sphere();
+    let mut left = Object::new_sphere();
     left.set_transform(&create_scaling(0.33, 0.33, 0.33).translation(-1.5, 0.33, -0.75));
     left.material = Material::default_material();
     left.material.color = Color::new_color(1.0, 0.8, 0.1);

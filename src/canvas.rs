@@ -1,5 +1,3 @@
-use std::usize;
-
 use crate::color::Color;
 
 #[derive(Debug, Clone)]
@@ -36,7 +34,7 @@ impl Canvas {
         }
     }
     pub fn pixel_at(& self, x_pos: usize, y_pos: usize) -> Color {
-        self.pixels[index_from_pos(x_pos, y_pos, self.width)].clone()
+        self.pixels[index_from_pos(x_pos, y_pos, self.width)]
     }
 
     pub fn set_pixel_color(&mut self, x_pos: usize, y_pos: usize, color: Color) {

@@ -15,22 +15,6 @@ pub struct Matrix {
     matrix: Vec<OrderedFloat<f64>>,
 }
 
-// impl PartialEq for Matrix {
-//     fn eq(&self, other: &Self) -> bool {
-//         if self.size != other.size {
-//             return false;
-//         } else {
-//             for m_tuple in self.matrix.iter().zip(other.matrix.iter()) {
-//                 let (am, bm) = m_tuple;
-//                 if !compare_float(*am, *bm) {
-//                     return false;
-//                 }
-//             }
-//         }
-//         true
-//     }
-// }
-
 impl Mul for Matrix {
     type Output = Matrix;
 
@@ -84,8 +68,8 @@ impl Mul<Tuple> for &Matrix {
 
         for row in 0..self.size {
             let mut val = 0.0;
-            for col in 0..self.size {
-                val += self.element(row, col) * other_as_vec[col];
+            for (col,other_elem) in other_as_vec.iter().enumerate().take(self.size) {
+                val += self.element(row, col) * other_elem;
             }
 
             tuple_tmp[row] = val;

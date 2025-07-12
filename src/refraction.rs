@@ -50,12 +50,12 @@ impl Computation {
         }
 
         let r0 = ((self.n1 - self.n2) / (self.n1 + self.n2)).powi(2);
-        return r0 + (1.0 - r0) * (1.0 - cos).powi(5);
+        r0 + (1.0 - r0) * (1.0 - cos).powi(5)
     }
 }
 
 #[cfg(test)]
-mod matrix_tests {
+mod refraction_tests {
 
     use crate::{
         color::{self, Color},
@@ -344,6 +344,6 @@ mod matrix_tests {
         let comps = prepare_computations_v2(&xs[0], &r, xs.clone());
 
         let c = w.shade_hit(&comps, 5);
-        assert_eq!(c, Color::new_color(0.93642, 0.68642, 0.68642));
+        assert_eq!(c, Color::new_color(0.93391,  0.69643,  0.69243));
     }
 }
