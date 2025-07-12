@@ -1,7 +1,7 @@
 use crate::{
     color::{self, Color},
-    matrix::{memoized_inverse, Matrix},
-    shape::shape::Shape,
+    matrix::{Matrix, memoized_inverse},
+    shape::{object::Object, shape::Shape},
     tuple::Tuple,
 };
 use std::rc::Rc;
@@ -141,8 +141,8 @@ impl Pattern {
         (self.fonction)(&self, point)
     }
 
-    pub fn color_at_object(&self, obj: &Box<dyn Shape>, point: Tuple) -> Color {
-        let obj_point = memoized_inverse( obj.get_transform()).unwrap() * point;
+    pub fn color_at_object(&self, obj: &Object, point: Tuple) -> Color {
+        let obj_point = memoized_inverse(obj.get_transform()).unwrap() * point;
         let pattern_point = memoized_inverse(self.get_transform()).unwrap() * obj_point;
         self.color_at_point(pattern_point)
     }
@@ -153,7 +153,7 @@ mod matrix_tests {
     use crate::{
         color::{self, BLACK, WHITE},
         reflection::{self, Material, PointLight},
-        shape::{shape::Shape, sphere::Sphere},
+        shape::shape::Shape,
         transformation,
     };
 
@@ -256,7 +256,7 @@ mod matrix_tests {
             &eyev,
             &normalv,
             false,
-            &Sphere::sphere().box_owned().into(),
+            Object::new_sphere(),
         );
         let c2 = reflection::lighting(
             &m,
@@ -265,7 +265,7 @@ mod matrix_tests {
             &eyev,
             &normalv,
             false,
-            &Sphere::sphere().box_owned().into(),
+            Object::new_sphere(),
         );
 
         assert_eq!(c1, color::WHITE);
@@ -275,7 +275,7 @@ mod matrix_tests {
     #[test]
     // Scenario: Stripes with an object transformation
     fn stripes_with_object_test() {
-        let mut object: Box<dyn Shape + 'static> = Sphere::sphere().box_owned().into();
+        let mut object = Object::new_sphere();
         object.set_transform(&transformation::create_scaling(2.0, 2.0, 2.0));
         let pattern = Pattern::new_stripe_pattern(color::WHITE, color::BLACK);
         let c = pattern.color_at_object(&object, Tuple::new_point(1.5, 0.0, 0.0));
@@ -286,7 +286,7 @@ mod matrix_tests {
     #[test]
     // Scenario: Stripes with a pattern transformation
     fn stripes_with_pattern_test() {
-        let object = &Sphere::sphere().box_owned().into();
+        let object = &Object::new_sphere();
         let mut pattern = Pattern::new_stripe_pattern(color::WHITE, color::BLACK);
         pattern.set_transform(&transformation::create_scaling(2.0, 2.0, 2.0));
         let c = pattern.color_at_object(object, Tuple::new_point(1.5, 0.0, 0.0));
@@ -297,7 +297,7 @@ mod matrix_tests {
     #[test]
     // Scenario: Stripes with both an object and a pattern transformation
     fn stripes_with_pattern_and_object_test() {
-        let mut object: Box<dyn Shape + 'static> = Sphere::sphere().box_owned().into();
+        let mut object=  Object::new_sphere();
         object.set_transform(&transformation::create_scaling(2.0, 2.0, 2.0));
         let mut pattern = Pattern::new_stripe_pattern(color::WHITE, color::BLACK);
         pattern.set_transform(&transformation::create_scaling(2.0, 2.0, 2.0));
@@ -327,7 +327,7 @@ mod matrix_tests {
     #[test]
     // Scenario: A pattern with an object transformation
     fn pattern_transformation_test() {
-        let mut object = Sphere::sphere().box_owned();
+        let mut object = Object::new_sphere();
         object.set_transform(&transformation::create_scaling(2.0, 2.0, 2.0));
         let pattern = Pattern::new_test_pattern();
         let c = pattern.color_at_object(&object, Tuple::new_point(2.0, 3.0, 4.0));
@@ -338,7 +338,7 @@ mod matrix_tests {
     #[test]
     // Scenario: A pattern with a pattern transformation
     fn pattern_transformation_test_2() {
-        let object = Sphere::sphere().box_owned();
+        let object = Object::new_sphere();
         let mut pattern = Pattern::new_test_pattern();
         pattern.set_transform(&transformation::create_scaling(2.0, 2.0, 2.0));
         let c = pattern.color_at_object(&object, Tuple::new_point(2.0, 3.0, 4.0));
@@ -349,7 +349,7 @@ mod matrix_tests {
     #[test]
     // Scenario: A pattern with both an object and a pattern transformation
     fn pattern_transformation_test_3() {
-        let mut object = Sphere::sphere().box_owned();
+        let mut object = Object::new_sphere();
         object.set_transform(&transformation::create_scaling(2.0, 2.0, 2.0));
 
         let mut pattern = Pattern::new_test_pattern();

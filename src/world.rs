@@ -2,7 +2,7 @@ use crate::{
     color::{self, Color},
     ray::{Intersection, Ray, hit_intersections, reflect},
     reflection::{Material, PointLight, lighting},
-    shape::{shape::Shape, sphere::Sphere},
+    shape::{object::Object, shape::Shape},
     transformation,
     tuple::Tuple,
 };
@@ -12,7 +12,7 @@ pub const SHADOW_EPSILON: f64 = 0.00000000001;
 #[derive(Debug, Clone, PartialEq)]
 pub struct World {
     pub light_sources: Vec<PointLight>,
-    pub objects: Vec<Box<dyn Shape>>,
+    pub objects: Vec<Object>,
 }
 
 impl World {
@@ -29,18 +29,18 @@ impl World {
             Tuple::new_point(-10.0, 10.0, -10.0),
         );
 
-        let mut s1 = Sphere::sphere();
+        let mut s1 = Object::new_sphere();
         s1.material = Material::default_material();
         s1.material.color = Color::new_color(0.8, 1.0, 0.6);
         s1.material.diffuse = 0.7;
         s1.material.specular = 0.2;
 
-        let mut s2 = Sphere::sphere();
+        let mut s2 = Object::new_sphere();
         s2.transform = transformation::create_scaling(0.5, 0.5, 0.5);
 
         World {
             light_sources: vec![light],
-            objects: vec![s1.box_clone(), s2.box_clone()],
+            objects: vec![s1, s2],
         }
     }
 
@@ -78,7 +78,7 @@ impl World {
                 &comps.eyev,
                 &comps.normalv,
                 is_shadow,
-                &comps.object.clone(),
+                comps.object.clone(),
             );
 
             let reflected = self.reflected_color(comps.clone(), remaining_calculations);
@@ -117,7 +117,7 @@ impl World {
         ref_color * comps.object.get_material().reflective
     }
 
-    pub fn add_object(&mut self, obj: Box<dyn Shape>) {
+    pub fn add_object(&mut self, obj: Object) {
         self.objects.push(obj);
     }
 }
@@ -125,7 +125,7 @@ impl World {
 #[derive(Debug, Clone)]
 pub struct Computation {
     pub t: f64,
-    pub object: Box<dyn Shape>,
+    pub object: Object,
     pub point: Tuple,
     pub over_point: Tuple,
     pub under_point: Tuple,
@@ -157,7 +157,7 @@ impl Computation {
     fn new() -> Computation {
         Computation {
             t: 0.0,
-            object: Sphere::sphere().box_clone(),
+            object: Object::new_sphere(),
             point: Tuple::new_point(0.0, 0.0, 0.0),
             over_point: Tuple::new_point(0.0, 0.0, 0.0),
             under_point: Tuple::new_point(0.0, 0.0, 0.0),
@@ -200,7 +200,7 @@ pub fn prepare_computations_v2(
     intersection_list: Vec<Intersection>,
 ) -> Computation {
     let mut comps = prepare_computations_helper(intersection, ray);
-    let mut container: Vec<Box<dyn Shape>> = Vec::new();
+    let mut container: Vec<Object> = Vec::new();
 
     for i in intersection_list {
         let is_hit = i == *intersection;
@@ -211,7 +211,7 @@ pub fn prepare_computations_v2(
                 comps.n1 = container.last().unwrap().get_material().refractive_index
             }
         }
-        let find_item = container.iter().position(|n| *n == i.object.box_owned());
+        let find_item = container.iter().position(|n| *n == i.object);
 
         match find_item {
             Some(x) => {
@@ -257,13 +257,13 @@ mod matrix_tests {
             Tuple::new_point(-10.0, 10.0, -10.0),
         );
 
-        let mut s1 = Sphere::sphere();
+        let mut s1 = Object::new_sphere();
         s1.material = Material::default_material();
         s1.material.color = Color::new_color(0.8, 1.0, 0.6);
         s1.material.diffuse = 0.7;
         s1.material.specular = 0.2;
 
-        let mut s2 = Sphere::sphere();
+        let mut s2 = Object::new_sphere();
         s2.transform = transformation::create_scaling(0.5, 0.5, 0.5);
 
         assert_eq!(w.objects.len(), 2);
@@ -295,7 +295,7 @@ mod matrix_tests {
             Tuple::new_vector(0.0, 0.0, 1.0),
         );
         let i = Intersection {
-            object: Box::new(Sphere::sphere()),
+            object: Object::new_sphere(),
             t: 4.0,
         };
         let comps = prepare_computations_helper(&i, &ray);
@@ -315,7 +315,7 @@ mod matrix_tests {
             Tuple::new_vector(0.0, 0.0, 1.0),
         );
         let i = Intersection {
-            object: Sphere::sphere().box_clone(),
+            object: Object::new_sphere(),
             t: 4.0,
         };
         let comps = prepare_computations_helper(&i, &ray);
@@ -331,7 +331,7 @@ mod matrix_tests {
             Tuple::new_vector(0.0, 0.0, 1.0),
         );
         let i = Intersection {
-            object: Sphere::sphere().box_clone(),
+            object: Object::new_sphere(),
             t: 4.0,
         };
         let comps = prepare_computations_helper(&i, &ray);
@@ -352,7 +352,7 @@ mod matrix_tests {
         );
         let shape = w.objects.first().unwrap().clone();
         let i = Intersection {
-            object: shape.box_clone(),
+            object: shape,
             t: 4.0,
         };
         let comps = prepare_computations_helper(&i, &ray);
@@ -379,7 +379,7 @@ mod matrix_tests {
         );
         let shape = w.objects[1].clone();
         let i = Intersection {
-            object: shape.box_clone(),
+            object: shape,
             t: 0.5,
         };
         let comps = prepare_computations_helper(&i, &ray);
@@ -486,11 +486,11 @@ mod matrix_tests {
             Tuple::new_point(0.0, 0.0, -10.0),
         )];
 
-        let s1 = Sphere::sphere();
-        w.objects.push(s1.box_clone());
-        let mut s2 = Sphere::sphere();
+        let s1 = Object::new_sphere();
+        w.objects.push(s1);
+        let mut s2 = Object::new_sphere();
         s2.set_transform(&create_translation(0.0, 0.0, 10.0));
-        w.objects.push(s2.box_clone());
+        w.objects.push(s2.clone());
 
         let ray = Ray::new(
             Tuple::new_point(0.0, 0.0, 5.0),
@@ -498,7 +498,7 @@ mod matrix_tests {
         );
 
         let i = Intersection {
-            object: s2.box_clone(),
+            object: s2.clone(),
             t: 4.0,
         };
         let comps = prepare_computations_helper(&i, &ray);
@@ -514,12 +514,9 @@ mod matrix_tests {
             Tuple::new_point(0.0, 0.0, -5.0),
             Tuple::new_vector(0.0, 0.0, 1.0),
         );
-        let mut s1 = Sphere::sphere();
+        let mut s1 = Object::new_sphere();
         s1.set_transform(&create_translation(0.0, 0.0, 1.0));
-        let i = Intersection {
-            object: s1.box_clone(),
-            t: 5.0,
-        };
+        let i = Intersection { object: s1, t: 5.0 };
         let comps = prepare_computations_helper(&i, &ray);
 
         assert_eq!(comps.over_point.z, -SHADOW_EPSILON);

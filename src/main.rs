@@ -22,14 +22,11 @@ use color::Color;
 use drivers::minifb_driver;
 use minifb::Key;
 use reflection::Material;
-use shape::{plane::Plane, shape::Shape, sphere::Sphere};
 use transformation::{create_rotation_x, create_scaling, create_translation, view_transform};
 use world::World;
 
 use crate::{
-    color::{BLACK, WHITE},
-    pattern::Pattern,
-    tuple::*,
+    color::{BLACK, WHITE}, pattern::Pattern, shape::object::Object, tuple::*
 };
 
 // TODO
@@ -38,13 +35,13 @@ use crate::{
 
 fn main() {
     //floor
-    let mut floor = Plane::plane();
+    let mut floor = Object::new_plane();
     floor.material = Material::default_material();
     floor.material.color = Color::new_color(1.0, 0.9, 0.9);
     floor.material.specular = 0.0;
 
     //left wall
-    let mut left_wall = Plane::plane();
+    let mut left_wall = Object::new_plane();
     left_wall.set_transform(
         &create_rotation_x(PI / 2.0)
             .rotation_y(-PI / 4.0)
@@ -54,7 +51,7 @@ fn main() {
     floor.material.pattern = Some(Pattern::new_checker_pattern(WHITE, BLACK));
 
     //rigth wall
-    let mut right_wall = Plane::plane();
+    let mut right_wall = Object::new_plane();
     right_wall.set_transform(
         &create_rotation_x(PI / 2.0)
             .rotation_y(PI / 4.0)
@@ -67,7 +64,7 @@ fn main() {
     ));
 
     //large sphere
-    let mut middle = Sphere::sphere();
+    let mut middle = Object::new_sphere();
     middle.set_transform(&create_translation(-0.5, 1.0, 0.5));
     middle.material = Material::default_material().clone();
     middle.material.color = Color::new_color(0.1, 1.0, 0.5);
@@ -81,7 +78,7 @@ fn main() {
     middle.set_transparency(0.9);
 
     //middle inner sphere
-    let mut middle_inner = Sphere::sphere();
+    let mut middle_inner =  Object::new_sphere();
     middle_inner.set_transform(&create_translation(-0.5, 1.0, 0.5).scaling(0.5, 0.5, 0.5));
     middle_inner.material = Material::default_material().set_reflective(0.5).clone();
     middle_inner.material.color = Color::new_color(1.0, 0.0, 0.0);
@@ -91,7 +88,7 @@ fn main() {
     middle_inner.set_transparency(0.5);
 
     //small sphere
-    let mut right = Sphere::sphere();
+    let mut right = Object::new_sphere();
     right.set_transform(&create_scaling(0.5, 0.5, 0.5).translation(1.5, 0.5, -0.5));
     right.material = Material::default_material();
     right.material.color = Color::new_color(0.5, 1.0, 0.1);
@@ -105,7 +102,7 @@ fn main() {
     right.set_transparency(0.6);
 
     //smaller sphere
-    let mut left = Sphere::sphere();
+    let mut left =  Object::new_sphere();
     left.set_transform(&create_scaling(0.33, 0.33, 0.33).translation(-1.5, 0.33, -0.75));
     left.material = Material::default_material();
     left.material.color = Color::new_color(1.0, 0.8, 0.1);
@@ -115,13 +112,13 @@ fn main() {
     //world creation
     let mut world = World::new_world();
     world.objects = vec![
-        Box::new(floor),
-        Box::new(left_wall),
-        Box::new(right_wall),
-        Box::new(middle),
-        Box::new(right),
-        Box::new(left),
-        Box::new(middle_inner),
+        floor,
+        left_wall,
+        right_wall,
+        middle,
+        right,
+        left,
+        middle_inner,
     ];
 
     //ligth source
@@ -145,8 +142,8 @@ fn main() {
     );
 
     //render result to a canvas
-    let canvas = camera.render_with_update_bar(world);
-    // let canvas = camera.render_par_with_update_bar(world);
+    // let canvas = camera.render_with_update_bar(world);
+    let canvas = camera.render_par_with_update_bar(world);
 
     let buffer = minifb_driver::buffer_from_canvas(&canvas);
     let mut window = minifb_driver::new_window(&canvas);

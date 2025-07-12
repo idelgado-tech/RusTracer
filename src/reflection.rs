@@ -2,7 +2,7 @@ use crate::{
     color::*,
     pattern::{self, Pattern},
     ray::reflect,
-    shape::shape::Shape,
+    shape::{object::Object, shape::Shape},
     tuple::Tuple,
 };
 
@@ -113,7 +113,7 @@ pub fn lighting(
     eyev: &Tuple,
     normalv: &Tuple,
     in_shadow: bool,
-    object: &Box<dyn Shape>,
+    object: Object,
 ) -> Color {
     let color = match &material.pattern {
         Some(pattern) => pattern.color_at_object(&object, point.clone()),
@@ -151,7 +151,6 @@ pub fn lighting(
 mod matrix_tests {
     use crate::{
         ray::{Intersection, Ray},
-        shape::{plane::Plane, sphere::Sphere},
         transformation,
         world::{World, prepare_computations_helper},
     };
@@ -192,7 +191,7 @@ mod matrix_tests {
     #[test]
     ///A sphere may be assigned a material
     fn sphere_material_creation() {
-        let mut s = Sphere::sphere();
+        let mut s = Object::new_sphere();
         let mut material = Material::default_material();
         material.ambiant = 1.0;
         s.material = material.clone();
@@ -220,7 +219,7 @@ mod matrix_tests {
             &eyev,
             &normalv,
             in_shadow,
-            &Sphere::sphere().box_owned().into(),
+            Object::new_sphere(),
         );
         assert_eq!(result, Color::new_color(1.9, 1.9, 1.9));
     }
@@ -246,7 +245,7 @@ mod matrix_tests {
             &eyev,
             &normalv,
             in_shadow,
-            &Sphere::sphere().box_owned(),
+            Object::new_sphere(),
         );
         assert_eq!(result, Color::new_color(1.0, 1.0, 1.0));
     }
@@ -272,7 +271,7 @@ mod matrix_tests {
             &eyev,
             &normalv,
             in_shadow,
-            &Sphere::sphere().box_owned(),
+            Object::new_sphere(),
         );
         assert_eq!(
             result,
@@ -301,7 +300,7 @@ mod matrix_tests {
             &eyev,
             &normalv,
             in_shadow,
-            &Sphere::sphere().box_owned(),
+            Object::new_sphere(),
         );
         assert_eq!(result, Color::new_color(0.1, 0.1, 0.1));
     }
@@ -327,7 +326,7 @@ mod matrix_tests {
             &eyev,
             &normalv,
             in_shadow,
-            &Sphere::sphere().box_owned(),
+            Object::new_sphere(),
         );
         assert_eq!(result, Color::new_color(0.1, 0.1, 0.1));
     }
@@ -342,12 +341,12 @@ mod matrix_tests {
     #[test]
     //Scenario: Precomputing the reflection vector
     fn reflection_precompute_test() {
-        let shape = Plane::plane();
+        let shape = Object::new_plane();
         let r = Ray::new(
             Tuple::new_point(0.0, 1.0, -1.0),
             Tuple::new_vector(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0),
         );
-        let i = Intersection::new(2.0_f64.sqrt(), Box::new(shape));
+        let i = Intersection::new(2.0_f64.sqrt(), &shape);
         let comps = prepare_computations_helper(&i, &r);
         assert_eq!(
             comps.reflectv,
@@ -367,7 +366,7 @@ mod matrix_tests {
 
         let shape = w.objects[1].clone();
         shape.get_material().ambiant = 1.0;
-        let i = Intersection::new(1.0, shape);
+        let i = Intersection::new(1.0, &shape);
 
         let comps = prepare_computations_helper(&i, &r);
         let color = w.reflected_color(comps, MAX_RECURTION);
@@ -378,17 +377,17 @@ mod matrix_tests {
     //Scenario: The reflected color for a reflective material
     fn reflection_reflective_test() {
         let mut w = World::default_world();
-        let mut shape = Plane::plane();
+        let mut shape = Object::new_plane();
         shape.set_material(shape.get_material().set_reflective(0.5));
         shape.set_transform(&transformation::create_translation(0.0, -1.0, 0.0));
-        w.add_object(shape.box_clone());
+        w.add_object(shape.clone());
 
         let r = Ray::new(
             Tuple::new_point(0.0, 0.0, -3.0),
             Tuple::new_vector(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0),
         );
 
-        let i = Intersection::new(2.0_f64.sqrt(), w.objects.last().unwrap().to_owned());
+        let i = Intersection::new(2.0_f64.sqrt(), &w.objects.last().unwrap());
 
         let comps = prepare_computations_helper(&i, &r);
         let color = w.reflected_color(comps, MAX_RECURTION);
@@ -403,17 +402,17 @@ mod matrix_tests {
     //Scenario: shade_hit() with a reflective material
     fn reflection_shade_hit_test() {
         let mut w = World::default_world();
-        let mut shape = Plane::plane();
+        let mut shape = Object::new_plane();
         shape.set_material(shape.get_material().set_reflective(0.5));
         shape.set_transform(&transformation::create_translation(0.0, -1.0, 0.0));
-        w.add_object(shape.box_clone());
+        w.add_object(shape.clone());
 
         let r = Ray::new(
             Tuple::new_point(0.0, 0.0, -3.0),
             Tuple::new_vector(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0),
         );
 
-        let i = Intersection::new(2.0_f64.sqrt(), w.objects.last().unwrap().to_owned());
+        let i = Intersection::new(2.0_f64.sqrt(), &w.objects.last().unwrap());
 
         let comps = prepare_computations_helper(&i, &r);
         let color = w.shade_hit(&comps, MAX_RECURTION);
@@ -433,15 +432,15 @@ mod matrix_tests {
             Tuple::new_point(0.0, 0.0, 0.0),
         );
 
-        let mut lower = Plane::plane();
+        let mut lower = Object::new_plane();
         lower.set_material(lower.get_material().set_reflective(1.0));
         lower.set_transform(&transformation::create_translation(0.0, -1.0, 0.0));
-        w.add_object(lower.box_clone());
+        w.add_object(lower.clone());
 
-        let mut upper = Plane::plane();
+        let mut upper = Object::new_plane();
         upper.set_material(upper.get_material().set_reflective(1.0));
         upper.set_transform(&transformation::create_translation(0.0, 1.0, 0.0));
-        w.add_object(upper.box_clone());
+        w.add_object(upper.clone());
 
         let r = Ray::new(
             Tuple::new_point(0.0, 0.0, 0.0),
@@ -461,17 +460,17 @@ mod matrix_tests {
     fn reflection_infinite_max_recursion_test() {
         let mut w = World::default_world();
 
-        let mut shape = Plane::plane();
+        let mut shape = Object::new_plane();
         shape.set_material(shape.get_material().set_reflective(0.5));
         shape.set_transform(&transformation::create_translation(0.0, -1.0, 0.0));
-        w.add_object(shape.box_clone());
+        w.add_object(shape.clone());
 
         let r = Ray::new(
             Tuple::new_point(0.0, 0.0, -3.0),
             Tuple::new_vector(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0),
         );
 
-        let i = Intersection::new(2.0_f64.sqrt(), w.objects.last().unwrap().to_owned());
+        let i = Intersection::new(2.0_f64.sqrt(), &w.objects.last().unwrap());
 
         let comps = prepare_computations_helper(&i, &r);
         let color = w.reflected_color(comps, 0);

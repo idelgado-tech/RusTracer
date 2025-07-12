@@ -61,7 +61,7 @@ mod matrix_tests {
         color::{self, Color},
         pattern::Pattern,
         ray::{Intersection, Ray},
-        shape::{plane::Plane, shape::Shape, sphere::Sphere},
+        shape::object::Object,
         transformation,
         tuple::Tuple,
         utils,
@@ -71,15 +71,15 @@ mod matrix_tests {
     #[test]
     // Scenario Outline: Finding n1 and n2 at various intersections
     fn refraction_at_intersection() {
-        let mut a = Sphere::new_glass_sphere();
+        let mut a = Object::new_glass_sphere();
         a.material.refractive_index = 1.5;
         a.set_transform(&transformation::create_scaling(2.0, 2.0, 2.0));
 
-        let mut b = Sphere::new_glass_sphere();
+        let mut b = Object::new_glass_sphere();
         b.material.refractive_index = 2.0;
         b.set_transform(&transformation::create_translation(0.0, 0.0, -0.25));
 
-        let mut c = Sphere::new_glass_sphere();
+        let mut c = Object::new_glass_sphere();
         c.material.refractive_index = 2.5;
         c.set_transform(&transformation::create_translation(0.0, 0.0, 0.25));
 
@@ -89,12 +89,12 @@ mod matrix_tests {
         );
 
         let xs = vec![
-            Intersection::new(2.0, a.box_owned()),
-            Intersection::new(2.75, b.box_owned()),
-            Intersection::new(3.25, c.box_owned()),
-            Intersection::new(4.75, b.box_owned()),
-            Intersection::new(5.25, c.box_owned()),
-            Intersection::new(6.0, a.box_owned()),
+            Intersection::new(2.0, &a),
+            Intersection::new(2.75, &b),
+            Intersection::new(3.25, &c),
+            Intersection::new(4.75, &b),
+            Intersection::new(5.25, &c),
+            Intersection::new(6.0, &a),
         ];
 
         let valeurs = vec![
@@ -122,10 +122,10 @@ mod matrix_tests {
             Tuple::new_vector(0.0, 0.0, 1.0),
         );
 
-        let mut shape = Sphere::new_glass_sphere();
+        let mut shape = Object::new_glass_sphere();
         shape.set_transform(&transformation::create_translation(0.0, 0.0, 1.0));
 
-        let i = Intersection::new(5.0, shape.box_owned());
+        let i = Intersection::new(5.0, &shape);
         let comps = prepare_computations_v2(&i, &r, vec![i.clone()]);
         assert!(comps.under_point.z > f64::EPSILON / 2.0);
         assert!(comps.point.z < comps.under_point.z);
@@ -136,15 +136,15 @@ mod matrix_tests {
         //Scenario: The under point is offset below the surface
 
         let w = World::default_world();
-        let shape = w.objects[0].as_ref();
+        let shape = &w.objects[0];
         let r = Ray::new(
             Tuple::new_point(0.0, 0.0, -5.0),
             Tuple::new_vector(0.0, 0.0, 1.0),
         );
 
         let xs = vec![
-            Intersection::new(4.00, shape.box_owned()),
-            Intersection::new(6.00, shape.box_owned()),
+            Intersection::new(4.00, &shape),
+            Intersection::new(6.00, &shape),
         ];
         let comps = prepare_computations_v2(&xs[0], &r, xs.clone());
 
@@ -156,7 +156,7 @@ mod matrix_tests {
     // Scenario: The refracted color at the maximum recursive depth
     fn refrected_color_2_test() {
         let mut w = World::default_world();
-        let shape = w.objects[0].as_mut();
+        let shape = &mut w.objects[0];
         shape.set_transparency(1.0);
         shape.set_refractive_index(1.5);
 
@@ -165,8 +165,8 @@ mod matrix_tests {
             Tuple::new_vector(0.0, 0.0, 1.0),
         );
         let xs = vec![
-            Intersection::new(4.00, shape.box_owned()),
-            Intersection::new(6.00, shape.box_owned()),
+            Intersection::new(4.00, &shape),
+            Intersection::new(6.00, &shape),
         ];
         let comps = prepare_computations_v2(&xs[0], &r, xs.clone());
 
@@ -178,7 +178,7 @@ mod matrix_tests {
     // Scenario: The refracted color under total internal reflection
     fn refrected_color_3_test() {
         let mut w = World::default_world();
-        let shape = w.objects[0].as_mut();
+        let shape = &mut w.objects[0];
         shape.set_transparency(1.0);
         shape.set_refractive_index(1.5);
 
@@ -187,8 +187,8 @@ mod matrix_tests {
             Tuple::new_vector(0.0, 1.0, 0.0),
         );
         let xs = vec![
-            Intersection::new(-2.0_f64.sqrt() / 2.0, shape.box_owned()),
-            Intersection::new(2.0_f64.sqrt() / 2.0, shape.box_owned()),
+            Intersection::new(-2.0_f64.sqrt() / 2.0, &shape),
+            Intersection::new(2.0_f64.sqrt() / 2.0, &shape),
         ];
         let comps = prepare_computations_v2(&xs[1], &r, xs.clone());
 
@@ -213,10 +213,10 @@ mod matrix_tests {
         );
 
         let xs = vec![
-            Intersection::new(-0.9899, w.objects[0].box_owned()),
-            Intersection::new(-0.4899, w.objects[1].box_owned()),
-            Intersection::new(0.4899, w.objects[1].box_owned()),
-            Intersection::new(0.9899, w.objects[0].box_owned()),
+            Intersection::new(-0.9899, &w.objects[0]),
+            Intersection::new(-0.4899, &w.objects[1]),
+            Intersection::new(0.4899, &w.objects[1]),
+            Intersection::new(0.9899, &w.objects[0]),
         ];
 
         let comps = prepare_computations_v2(&xs[2], &r, xs.clone());
@@ -233,26 +233,26 @@ mod matrix_tests {
     fn refrected_shade_hit() {
         let mut w = World::default_world();
 
-        let mut floor = Plane::plane();
+        let mut floor = Object::new_plane();
         floor.set_transform(&transformation::create_translation(0.0, -1.0, 0.0));
         floor.set_transparency(0.5);
         floor.set_refractive_index(1.5);
 
-        w.add_object(floor.box_owned());
+        w.add_object(floor.clone());
 
-        let mut ball = Sphere::sphere();
+        let mut ball = Object::new_sphere();
         ball.set_color(Color::new_color(1.0, 0.0, 0.0));
         ball.set_ambiant(0.5);
         ball.set_transform(&transformation::create_translation(0.0, -3.5, -0.5));
 
-        w.add_object(ball.box_owned());
+        w.add_object(ball);
 
         let r = Ray::new(
             Tuple::new_point(0.0, 0.0, -3.0),
             Tuple::new_vector(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0),
         );
 
-        let xs = vec![Intersection::new(2.0_f64.sqrt(), floor.box_owned())];
+        let xs = vec![Intersection::new(2.0_f64.sqrt(), &floor)];
 
         let comps = prepare_computations_v2(&xs[0], &r, xs.clone());
 
@@ -263,15 +263,15 @@ mod matrix_tests {
     #[test]
     // Scenario: The Schlick approximation under total internal reflection
     fn schlick_test_1() {
-        let shape = Sphere::new_glass_sphere();
+        let shape = Object::new_glass_sphere();
         let r = Ray::new(
             Tuple::new_point(0.0, 0.0, 2.0_f64.sqrt() / 2.0),
             Tuple::new_vector(0.0, 1.0, 0.0),
         );
 
         let xs = vec![
-            Intersection::new(-2.0_f64.sqrt() / 2.0, shape.box_owned()),
-            Intersection::new(2.0_f64.sqrt() / 2.0, shape.box_owned()),
+            Intersection::new(-2.0_f64.sqrt() / 2.0, &shape),
+            Intersection::new(2.0_f64.sqrt() / 2.0, &shape),
         ];
 
         let comps = prepare_computations_v2(&xs[1], &r, xs.clone());
@@ -282,7 +282,7 @@ mod matrix_tests {
     #[test]
     // Scenario: The Schlick approximation with a perpendicular viewing angle
     fn schlick_test_2() {
-        let shape = Sphere::new_glass_sphere();
+        let shape = Object::new_glass_sphere();
 
         let r = Ray::new(
             Tuple::new_point(0.0, 0.0, 0.0),
@@ -290,8 +290,8 @@ mod matrix_tests {
         );
 
         let xs = vec![
-            Intersection::new(-1.0, shape.box_owned()),
-            Intersection::new(1.0, shape.box_owned()),
+            Intersection::new(-1.0, &shape),
+            Intersection::new(1.0, &shape),
         ];
 
         let comps = prepare_computations_v2(&xs[1], &r, xs.clone());
@@ -302,14 +302,14 @@ mod matrix_tests {
     #[test]
     // Scenario: The Schlick approximation with small angle and n2 > n1
     fn schlick_test_3() {
-        let shape = Sphere::new_glass_sphere();
+        let shape = Object::new_glass_sphere();
 
         let r = Ray::new(
             Tuple::new_point(0.0, 0.99, -2.0),
             Tuple::new_vector(0.0, 0.0, 1.0),
         );
 
-        let xs = vec![Intersection::new(1.8589, shape.box_owned())];
+        let xs = vec![Intersection::new(1.8589, &shape)];
 
         let comps = prepare_computations_v2(&xs[0], &r, xs.clone());
         let refelctance = comps.schlick();
@@ -326,20 +326,20 @@ mod matrix_tests {
             Tuple::new_vector(0.0, -2.0_f64.sqrt() / 2.0, 2.0_f64.sqrt() / 2.0),
         );
 
-        let mut floor = Plane::plane();
+        let mut floor = Object::new_plane();
         floor.set_transform(&transformation::create_translation(0.0, -1.0, 0.0));
         floor.set_reflective(0.5);
         floor.set_refractive_index(1.5);
         floor.set_transparency(0.5);
-        w.add_object(floor.box_owned());
+        w.add_object(floor.clone());
 
-        let mut ball = Sphere::sphere();
+        let mut ball = Object::new_sphere();
         ball.set_color(Color::new_color(1.0, 0.0, 0.0));
         ball.set_ambiant(0.5);
         ball.set_transform(&transformation::create_translation(0.0, -3.5, -0.5));
-        w.add_object(ball.box_owned());
+        w.add_object(ball.clone());
 
-        let xs = vec![Intersection::new(2.0_f64.sqrt(), floor.box_owned())];
+        let xs = vec![Intersection::new(2.0_f64.sqrt(), &floor)];
 
         let comps = prepare_computations_v2(&xs[0], &r, xs.clone());
 
@@ -347,11 +347,3 @@ mod matrix_tests {
         assert_eq!(c, Color::new_color(0.93642, 0.68642, 0.68642));
     }
 }
-
-// Scenario: The Schlick approximation with small angle and n2 > n1
-// Given shape ← glass_sphere()
-// And r ← ray(point(0, 0.99, -2), vector(0, 0, 1))
-// And xs ← intersections(1.8589:shape)
-// When comps ← prepare_computations(xs[0], r, xs)
-// And reflectance ← schlick(comps)
-// Then reflectance = 0.48873

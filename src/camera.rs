@@ -71,9 +71,10 @@ impl Camera {
         let world_x = self.half_width - xoffset;
         let world_y = self.half_height - yoffset;
 
-        let pixel =
-            memoized_inverse(self.clone().transformation).unwrap() * Tuple::new_point(world_x, world_y, -1.0);
-        let origin = memoized_inverse(self.clone().transformation).unwrap() * Tuple::new_point(0.0, 0.0, 0.0);
+        let pixel = memoized_inverse(self.clone().transformation).unwrap()
+            * Tuple::new_point(world_x, world_y, -1.0);
+        let origin = memoized_inverse(self.clone().transformation).unwrap()
+            * Tuple::new_point(0.0, 0.0, 0.0);
         let direction = (pixel - origin.clone()).normalize();
 
         Ray::new(origin, direction)
@@ -130,7 +131,7 @@ impl Camera {
         //     .pixels()
         //     .par_chunks_mut(self.hsize * BAND_SIZE)
         //     .enumerate()
-        //     // .progress_with_style(bar_style)
+        //     .progress_with_style(bar_style)
         //     .for_each(|(i, band)| {
         //         for row in 0..BAND_SIZE {
         //             for col in 0..self.hsize {

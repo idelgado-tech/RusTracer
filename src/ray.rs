@@ -1,4 +1,4 @@
-use crate::{matrix::*, shape::shape::Shape, tuple::*};
+use crate::{matrix::*, shape::{object::Object, shape::Shape}, tuple::*};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Ray {
@@ -32,7 +32,7 @@ impl Ray {
 #[derive(Debug, Clone)]
 pub struct Intersection {
     pub t: f64,
-    pub object: Box<dyn Shape>,
+    pub object: Object,
 }
 
 impl PartialEq for Intersection {
@@ -42,10 +42,10 @@ impl PartialEq for Intersection {
 }
 
 impl Intersection {
-    pub fn new(t: f64, object: Box<dyn Shape>) -> Intersection {
+    pub fn new(t: f64, object: &Object) -> Intersection {
         Intersection {
             t,
-            object: object.box_clone(),
+            object: object.clone(),
         }
     }
 }
@@ -68,7 +68,7 @@ pub fn hit_intersections(intersections: Vec<Intersection>) -> Option<Intersectio
 #[cfg(test)]
 mod transformation_tests {
     use super::*;
-    use crate::{shape::sphere::Sphere, transformation};
+    use crate::{ transformation};
 
     #[test]
     ///Reflecting a vector approaching at 45°
@@ -120,14 +120,14 @@ mod transformation_tests {
         let origin = Tuple::new_point(0.0, 0.0, -5.0);
         let direction = Tuple::new_vector(0.0, 0.0, 1.0);
         let ray = Ray::new(origin, direction);
-        let mut s = Sphere::sphere();
+        let mut s = Object::new_sphere();
         let xs = s.intersect(ray);
 
         assert_eq!(xs.len(), 2);
         assert_eq!(xs[0].t, 4.0);
-        assert!((xs[0].object == s.box_owned()));
+        assert!((xs[0].object == s));
         assert_eq!(xs[1].t, 6.0);
-        assert!((xs[1].object == s.box_owned()));
+        assert!((xs[1].object == s));
     }
 
     #[test]
@@ -136,7 +136,7 @@ mod transformation_tests {
         let origin = Tuple::new_point(0.0, 1.0, -5.0);
         let direction = Tuple::new_vector(0.0, 0.0, 1.0);
         let ray = Ray::new(origin, direction);
-        let mut s = Sphere::sphere();
+        let mut s = Object::new_sphere();
         let xs = s.intersect(ray);
 
         assert_eq!(xs.len(), 2);
@@ -150,7 +150,7 @@ mod transformation_tests {
         let origin = Tuple::new_point(0.0, 2.0, -5.0);
         let direction = Tuple::new_vector(0.0, 0.0, 1.0);
         let ray = Ray::new(origin, direction);
-        let mut s = Sphere::sphere();
+        let mut s = Object::new_sphere();
         let xs = s.intersect(ray);
 
         assert_eq!(xs.len(), 0);
@@ -162,7 +162,7 @@ mod transformation_tests {
         let origin = Tuple::new_point(0.0, 0.0, 0.0);
         let direction = Tuple::new_vector(0.0, 0.0, 1.0);
         let ray = Ray::new(origin, direction);
-        let mut s = Sphere::sphere();
+        let mut s = Object::new_sphere();
         let xs = s.intersect(ray);
 
         assert_eq!(xs.len(), 2);
@@ -173,19 +173,19 @@ mod transformation_tests {
     #[test]
     ///An intersection encapsulates t and object
     fn intersection_creation() {
-        let s = Sphere::sphere();
-        let i = Intersection::new(3.5, s.box_owned());
+        let s = Object::new_sphere();
+        let i = Intersection::new(3.5, &s);
 
         assert_eq!(i.t, 3.5);
-        assert!((i.object == s.box_owned()));
+        assert!((i.object == s));
     }
 
     #[test]
     ///The hit, when all intersections have positive t
     fn hit_intersections_1() {
-        let s = Sphere::sphere();
-        let i1 = Intersection::new(1.0, s.box_owned());
-        let i2 = Intersection::new(2.0, s.box_owned());
+        let s = Object::new_sphere();
+        let i1 = Intersection::new(1.0, &s);
+        let i2 = Intersection::new(2.0, &s);
         let intersections = vec![i1.clone(), i2];
         let i = hit_intersections(intersections).unwrap();
         assert_eq!(i, i1);
@@ -194,9 +194,9 @@ mod transformation_tests {
     #[test]
     ///The hit, when some intersections have negative t
     fn hit_intersections_2() {
-        let s = Sphere::sphere();
-        let i1 = Intersection::new(-1.0, s.box_owned());
-        let i2 = Intersection::new(2.0, s.box_owned());
+        let s = Object::new_sphere();
+        let i1 = Intersection::new(-1.0, &s);
+        let i2 = Intersection::new(2.0, &s);
         let intersections = vec![i1.clone(), i2.clone()];
         let i = hit_intersections(intersections).unwrap();
         assert_eq!(i, i2);
@@ -205,9 +205,9 @@ mod transformation_tests {
     #[test]
     ///The hit, when some intersections have negative t
     fn hit_intersections_3() {
-        let s = Sphere::sphere();
-        let i1 = Intersection::new(-1.0, s.box_owned());
-        let i2 = Intersection::new(-2.0, s.box_owned());
+        let s = Object::new_sphere();
+        let i1 = Intersection::new(-1.0, &s);
+        let i2 = Intersection::new(-2.0, &s);
         let intersections = vec![i1.clone(), i2.clone()];
         let i = hit_intersections(intersections);
         assert_eq!(i, Option::None);
@@ -216,11 +216,11 @@ mod transformation_tests {
     #[test]
     ///Scenario​: The hit is always the lowest nonnegative intersection
     fn hit_intersections_4() {
-        let s = Sphere::sphere();
-        let i1 = Intersection::new(5.0, s.box_owned());
-        let i2 = Intersection::new(7.0, s.box_owned());
-        let i3 = Intersection::new(-2.0, s.box_owned());
-        let i4 = Intersection::new(2.0, s.box_owned());
+        let s = Object::new_sphere();
+        let i1 = Intersection::new(5.0, &s);
+        let i2 = Intersection::new(7.0, &s);
+        let i3 = Intersection::new(-2.0, &s);
+        let i4 = Intersection::new(2.0, &s);
 
         let intersections = vec![i1.clone(), i2.clone(), i3.clone(), i4.clone()];
         let i = hit_intersections(intersections).unwrap();

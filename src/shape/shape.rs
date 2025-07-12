@@ -4,177 +4,136 @@ use crate::color::Color;
 use crate::matrix::memoized_inverse;
 use crate::pattern::Pattern;
 use crate::ray::{Intersection, Ray};
+use crate::shape::object::Object;
+use crate::tuple;
 use crate::{matrix::Matrix, reflection};
 
 use crate::{reflection::Material, tuple::*};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct ShapeTest {
-    pub transform: Matrix,
-    pub material: Material,
-    pub id: Uuid,
-    pub saved_ray: Ray,
+pub enum Shape {
+    ShapeTest { saved_ray: Ray },
+    Sphere { origin: Tuple, radius: f64 },
+    Plane(),
 }
 
-impl ShapeTest {
-    fn test_shape() -> ShapeTest {
-        ShapeTest {
+impl Object {
+    fn new_test_shape() -> Object {
+        Object {
             transform: Matrix::new_identity_matrix(4),
             material: reflection::Material::default_material(),
             id: Uuid::new_v4(),
-            saved_ray: Ray {
-                direction: Tuple {
-                    x: 0.0,
-                    y: 0.0,
-                    z: 0.0,
-                    w: W::Point,
-                },
-                origin: Tuple {
-                    x: 0.0,
-                    y: 0.0,
-                    z: 0.0,
-                    w: W::Point,
+            shape: Shape::ShapeTest {
+                saved_ray: Ray {
+                    direction: Tuple {
+                        x: 0.0,
+                        y: 0.0,
+                        z: 0.0,
+                        w: W::Point,
+                    },
+                    origin: Tuple {
+                        x: 0.0,
+                        y: 0.0,
+                        z: 0.0,
+                        w: W::Point,
+                    },
                 },
             },
         }
     }
 }
 
-pub trait Shape {
-    fn intersect(&mut self, ray: Ray) -> Vec<Intersection> {
-        self.local_intersect(ray)
-    }
-    fn normal_at(&self, point: Tuple) -> Tuple {
-        self.local_normal_at(point)
-    }
+impl Shape {
+    pub fn local_intersect(&mut self, object: Object, local_ray: Ray) -> Vec<Intersection> {
+        match self {
+            Shape::ShapeTest { saved_ray } => {
+                *saved_ray =
+                    local_ray.transform(&memoized_inverse(object.transform.clone()).unwrap());
+                vec![]
+            }
+            Shape::Sphere { origin, radius } => {
+                let transformed_ray =
+                    local_ray.transform(&memoized_inverse(object.transform.clone()).unwrap());
+                let sphere_to_ray = transformed_ray.origin - origin.to_owned();
+                let a = Tuple::dot_product(&transformed_ray.direction, &transformed_ray.direction);
+                let b = 2.0 * Tuple::dot_product(&transformed_ray.direction, &sphere_to_ray);
+                let c = Tuple::dot_product(&sphere_to_ray, &sphere_to_ray) - 1.0;
+                let discriminant = b.powi(2) - 4.0 * a * c;
 
-    fn local_intersect(&mut self, local_ray: Ray) -> Vec<Intersection>;
-    fn local_normal_at(&self, point: Tuple) -> Tuple;
-
-    fn box_clone(&self) -> Box<dyn Shape>;
-    fn box_owned(&self) -> Box<dyn Shape>;
-
-    fn get_transform(&self) -> Matrix;
-    fn set_transform(&mut self, new_stransform: &Matrix);
-
-    // material
-    fn get_material(&self) -> Material;
-    fn set_material(&mut self, new_material: &Material);
-
-    fn set_transparency(&mut self, transparency: f64) {
-        self.set_material(self.get_material().set_transparency(transparency));
-    }
-
-    fn set_refractive_index(&mut self, refractive_index: f64) {
-        self.set_material(self.get_material().set_refractive_index(refractive_index));
-    }
-
-    fn set_ambiant(&mut self, ambiant: f64) {
-        self.set_material(self.get_material().set_ambiant(ambiant));
-    }
-
-    fn set_pattern(&mut self, pattern: Pattern) {
-        self.set_material(self.get_material().set_pattern(pattern));
-    }
-
-    fn set_reflective(&mut self, reflection: f64) {
-        self.set_material(self.get_material().set_reflective(reflection));
-    }
-
-    fn set_color(&mut self, color: Color) {
-        self.set_material(self.get_material().set_color(color));
+                if discriminant < 0.0 {
+                    vec![]
+                } else {
+                    let t1 = (-b - discriminant.sqrt()) / (2.0 * a);
+                    let t2 = (-b + discriminant.sqrt()) / (2.0 * a);
+                    vec![
+                        Intersection::new(t1, &object),
+                        Intersection::new(t2, &object),
+                    ]
+                }
+            }
+            Shape::Plane() => {
+                let transformed_ray =
+                    local_ray.transform(&memoized_inverse(object.transform.clone()).unwrap());
+                if transformed_ray.direction.y.abs() < 0.00001 {
+                    vec![]
+                } else {
+                    let t = -transformed_ray.origin.y / transformed_ray.direction.y;
+                    vec![Intersection::new(t, &object)]
+                }
+            }
+        }
     }
 
-
-    fn get_id(&self) -> Uuid;
-}
-
-
-impl Shape for ShapeTest {
-    fn local_intersect(&mut self, local_ray: Ray) -> Vec<Intersection> {
-        self.saved_ray = local_ray.transform(& memoized_inverse(self.transform.clone()).unwrap());
-        vec![]
-    }
-
-    fn local_normal_at(&self, point: Tuple) -> Tuple {
-        let local_point = memoized_inverse(self.transform.clone()).unwrap() * point;
-        let local_normal = local_point;
-        let mut world_normal = memoized_inverse(self.transform.clone()).unwrap() * local_normal;
-        world_normal.w = W::from_int(0);
-        world_normal.normalize()
-    }
-
-    // Default implem
-    fn set_transform(&mut self, new_stransform: &Matrix) {
-        self.transform = new_stransform.clone();
-    }
-    fn get_transform(&self) -> Matrix {
-        self.transform.clone()
-    }
-
-    fn set_material(&mut self, new_material: &Material) {
-        self.material = new_material.clone();
-    }
-    fn get_material(&self) -> Material {
-        self.material.clone()
-    }
-
-    fn get_id(&self) -> Uuid {
-        self.id
-    }
-
-    fn box_clone(&self) -> Box<dyn Shape> {
-        Box::new((*self).clone())
-    }
-
-    fn box_owned(&self) -> Box<dyn Shape> {
-        Box::new((*self).to_owned())
-    }
-}
-
-impl Debug for dyn Shape {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
-        f.debug_tuple("")
-            .field(&self.get_material())
-            .field(&self.get_transform())
-            .field(&self.get_id())
-            .finish()
-    }
-}
-
-impl PartialEq for dyn Shape {
-    fn eq(&self, other: &Self) -> bool {
-        self.get_id() == other.get_id()
-            && self.get_transform() == other.get_transform()
-            && self.get_material() == other.get_material()
-    }
-}
-
-impl Clone for Box<dyn Shape> {
-    fn clone(&self) -> Self {
-        self.box_clone()
+    pub fn local_normal_at(&self, object: Object, point: Tuple) -> Tuple {
+        match self {
+            Shape::ShapeTest { saved_ray } =>
+            {
+                let local_point = memoized_inverse(object.transform.clone()).unwrap() * point;
+                let local_normal = local_point;
+                let mut world_normal =
+                    memoized_inverse(object.transform.clone()).unwrap() * local_normal;
+                world_normal.w = W::from_int(0);
+                world_normal.normalize()
+            }
+            Shape::Sphere { origin, radius } => {
+                let object_point =
+                    memoized_inverse(object.transform.clone()).unwrap() * point.clone();
+                let object_normal = object_point - Tuple::new_point(0.0, 0.0, 0.0);
+                let mut world_normal = memoized_inverse(object.transform.clone())
+                    .unwrap()
+                    .transpose()
+                    * object_normal;
+                world_normal.w = tuple::W::from_int(0);
+                world_normal.normalize()
+            }
+            Shape::Plane() => {
+                memoized_inverse(object.transform.clone()).unwrap()
+                    * Tuple::new_vector(0.0, 1.0, 0.0)
+            }
+        }
     }
 }
 
 #[cfg(test)]
-mod transformation_tests {
+mod shape_tests {
     use super::*;
     use crate::Color;
+    use crate::shape::object;
     use crate::transformation;
     use std::f64::consts::PI;
 
     #[test]
     // Scenario: The default transformation
     fn default_test_shape() {
-        let s = ShapeTest::test_shape();
+        let s = Object::new_test_shape();
         assert_eq!(s.transform, Matrix::new_identity_matrix(4));
     }
 
     #[test]
     //Assigning a transformation
     fn assign_test_shape() {
-        let mut s = ShapeTest::test_shape();
+        let mut s = Object::new_test_shape();
         s.set_transform(&transformation::create_translation(2.0, 3.0, 4.0));
         assert_eq!(
             s.transform,
@@ -185,7 +144,7 @@ mod transformation_tests {
     #[test]
     ///The default material
     fn test_shape_default_material() {
-        let s = ShapeTest::test_shape();
+        let s = Object::new_test_shape();
         let material = s.material;
         assert_eq!(material.color, Color::new_color(1.0, 1.0, 1.0));
         assert_eq!(material.ambiant, 0.1);
@@ -197,7 +156,7 @@ mod transformation_tests {
     #[test]
     ///A sphere may be assigned a material
     fn test_shape_material_creation() {
-        let mut s = ShapeTest::test_shape();
+        let mut s = Object::new_test_shape();
         let mut material = Material::default_material();
         material.ambiant = 1.0;
         s.material = material.clone();
@@ -210,12 +169,15 @@ mod transformation_tests {
             Tuple::new_point(0.0, 0.0, -5.0),
             Tuple::new_vector(0.0, 0.0, 1.0),
         );
-        let mut s = ShapeTest::test_shape();
+        let mut s = Object::new_test_shape();
         s.set_transform(&transformation::create_scaling(2.0, 2.0, 2.0));
         let _: Vec<Intersection> = s.intersect(r);
-
-        assert_eq!(s.saved_ray.origin.clone(), Tuple::new_point(0.0, 0.0, -2.5));
-        assert_eq!(s.saved_ray.direction, Tuple::new_vector(0.0, 0.0, 0.5));
+        if let Shape::ShapeTest { saved_ray } = s.shape {
+            assert_eq!(saved_ray.origin, Tuple::new_point(0.0, 0.0, -2.5));
+            assert_eq!(saved_ray.direction, Tuple::new_vector(0.0, 0.0, 0.5));
+        } else {
+            panic!("Shuold not happend")
+        }
     }
 
     #[test]
@@ -225,31 +187,35 @@ mod transformation_tests {
             Tuple::new_point(0.0, 0.0, -5.0),
             Tuple::new_vector(0.0, 0.0, 1.0),
         );
-        let mut s = ShapeTest::test_shape();
+        let mut s = Object::new_test_shape();
         s.set_transform(&transformation::create_translation(5.0, 0.0, 0.0));
         let _: Vec<Intersection> = s.intersect(r);
 
-        assert_eq!(s.saved_ray.origin, Tuple::new_point(-5.0, 0.0, -5.0));
-        assert_eq!(s.saved_ray.direction, Tuple::new_vector(0.0, 0.0, 1.0));
+        if let Shape::ShapeTest { saved_ray } = s.shape {
+            assert_eq!(saved_ray.origin, Tuple::new_point(-5.0, 0.0, -5.0));
+            assert_eq!(saved_ray.direction, Tuple::new_vector(0.0, 0.0, 1.0));
+        } else {
+            panic!("Should not happend")
+        }
     }
 
     #[test]
     //Scenario: Computing the normal on a translated shape
     fn test_normal_shape() {
-        let mut s = ShapeTest::test_shape();
+        let mut s = Object::new_test_shape();
         s.set_transform(&transformation::create_translation(0.0, 1.0, 0.0));
-        let n = Shape::normal_at(&s, Tuple::new_point(0.0, 1.70711, -0.70711));
+        let n = Object::normal_at(&s, Tuple::new_point(0.0, 1.70711, -0.70711));
         assert_eq!(n, Tuple::new_vector(0.0, 0.70711, -0.70711));
     }
 
     #[test]
     // Scenario: Computing the normal on a transformed shape
     fn test_normal_shape_transform() {
-        let mut s = ShapeTest::test_shape();
+        let mut s = Object::new_test_shape();
         let m = transformation::create_scaling(1.0, 0.5, 1.0)
             * transformation::create_rotation_z(PI / 5.0);
         s.set_transform(&m);
-        let n = Shape::normal_at(
+        let n = Object::normal_at(
             &s,
             Tuple::new_point(0.0, (2.0_f64.sqrt()) / 2.0, -(2.0_f64.sqrt()) / 2.0),
         );

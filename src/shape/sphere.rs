@@ -1,103 +1,40 @@
 use uuid::Uuid;
 
-use crate::matrix::{memoized_inverse, Matrix};
+use crate::matrix::{Matrix, memoized_inverse};
 use crate::ray::{Intersection, Ray};
 use crate::reflection::Material;
+use crate::shape::object::Object;
 use crate::tuple::{self, Tuple};
 
 use super::shape::Shape;
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct Sphere {
-    pub origin: Tuple,
-    pub radius: f64,
-    pub transform: Matrix,
-    pub material: Material,
-    pub id: Uuid,
-}
-
-
-
-impl Sphere {
-    pub fn sphere() -> Sphere {
-        Sphere {
-            origin: Tuple::new_point(0.0, 0.0, 0.0),
-            radius: 1.0,
+impl Object {
+    pub fn new_sphere() -> Object {
+        Object {
+            shape: Shape::Sphere {
+                origin: Tuple::new_point(0.0, 0.0, 0.0),
+                radius: 1.0,
+            },
             id: Uuid::new_v4(),
             transform: Matrix::new_identity_matrix(4),
             material: Material::default_material(),
         }
     }
 
-    pub fn new_glass_sphere() -> Sphere {
+    pub fn new_glass_sphere() -> Object {
         let mut material = Material::default_material();
         material.transparency = 1.0;
         material.refractive_index = 1.5;
 
-        Sphere {
-            origin: Tuple::new_point(0.0, 0.0, 0.0),
-            radius: 1.0,
+        Object {
+            shape: Shape::Sphere {
+                origin: Tuple::new_point(0.0, 0.0, 0.0),
+                radius: 1.0,
+            },
             id: Uuid::new_v4(),
             transform: Matrix::new_identity_matrix(4),
             material,
         }
-    }
-}
-
-impl Shape for Sphere {
-    fn local_normal_at(&self, p: Tuple) -> Tuple {
-        let object_point = memoized_inverse(self.transform.clone()).unwrap() * p.clone();
-        let object_normal = object_point - Tuple::new_point(0.0, 0.0, 0.0);
-        let mut world_normal = memoized_inverse(self.transform.clone()).unwrap().transpose() * object_normal;
-        world_normal.w = tuple::W::from_int(0);
-        world_normal.normalize()
-    }
-
-    fn local_intersect(&mut self, local_ray: Ray) -> Vec<Intersection> {
-        let transformed_ray = local_ray.transform(&memoized_inverse(self.transform.clone()).unwrap());
-        let sphere_to_ray = transformed_ray.origin - self.clone().origin;
-        let a = Tuple::dot_product(&transformed_ray.direction, &transformed_ray.direction);
-        let b = 2.0 * Tuple::dot_product(&transformed_ray.direction, &sphere_to_ray);
-        let c = Tuple::dot_product(&sphere_to_ray, &sphere_to_ray) - 1.0;
-        let discriminant = b.powi(2) - 4.0 * a * c;
-
-        if discriminant < 0.0 {
-            vec![]
-        } else {
-            let t1 = (-b - discriminant.sqrt()) / (2.0 * a);
-            let t2 = (-b + discriminant.sqrt()) / (2.0 * a);
-            vec![
-                Intersection::new(t1, self.box_clone()),
-                Intersection::new(t2, self.box_clone()),
-            ]
-        }
-    }
-
-    // Default implem
-    fn set_transform(&mut self, new_stransform: &Matrix) {
-        self.transform = new_stransform.clone();
-    }
-    fn get_transform(&self) -> Matrix {
-        self.transform.clone()
-    }
-
-    fn set_material(&mut self, new_material: &Material) {
-        self.material = new_material.clone();
-    }
-    fn get_material(&self) -> Material {
-        self.material.clone()
-    }
-
-    fn get_id(&self) -> Uuid {
-        self.id
-    }
-
-    fn box_clone(&self) -> Box<dyn Shape> {
-        Box::new((*self).clone())
-    }
-
-    fn box_owned(&self) -> Box<dyn Shape> {
-        Box::new((*self).to_owned())
     }
 }
 
@@ -110,7 +47,7 @@ mod sphere_tests {
     #[test]
     ///The normal on a sphere at a point on the x axis
     fn glassy_sphere_test() {
-        let s = Sphere::new_glass_sphere();
+        let s = Object::new_glass_sphere();
 
         assert_eq!(s.transform, Matrix::new_identity_matrix(4));
         assert_eq!(s.material.transparency, 1.0);
@@ -120,8 +57,8 @@ mod sphere_tests {
     #[test]
     ///The normal on a sphere at a point on the x axis
     fn sphere_normal_x() {
-        let s = Sphere::sphere();
-        let n = s.local_normal_at(Tuple::new_point(1.0, 0.0, 0.0));
+        let s = Object::new_sphere();
+        let n = s.shape.local_normal_at(s.clone(),Tuple::new_point(1.0, 0.0, 0.0));
 
         assert_eq!(n, Tuple::new_vector(1.0, 0.0, 0.0));
     }
@@ -129,8 +66,8 @@ mod sphere_tests {
     #[test]
     ///The normal on a sphere at a point on the y axis
     fn sphere_normal_y() {
-        let s = Sphere::sphere();
-        let n = s.local_normal_at(Tuple::new_point(0.0, 1.0, 0.0));
+        let s = Object::new_sphere();
+        let n = s.shape.local_normal_at(s.clone(),Tuple::new_point(0.0, 1.0, 0.0));
 
         assert_eq!(n, Tuple::new_vector(0.0, 1.0, 0.0));
     }
@@ -138,8 +75,8 @@ mod sphere_tests {
     #[test]
     ///The normal on a sphere at a point on the z axis
     fn sphere_normal_z() {
-        let s = Sphere::sphere();
-        let n = s.local_normal_at(Tuple::new_point(0.0, 0.0, 1.0));
+        let s = Object::new_sphere();
+        let n = s.shape.local_normal_at(s.clone(),Tuple::new_point(0.0, 0.0, 1.0));
 
         assert_eq!(n, Tuple::new_vector(0.0, 0.0, 1.0));
     }
@@ -147,9 +84,9 @@ mod sphere_tests {
     #[test]
     ///Computing the normal on a translated sphere
     fn sphere_normal_translation() {
-        let mut s = Sphere::sphere();
+        let mut s = Object::new_sphere();
         s.set_transform(&transformation::create_translation(0.0, 1.0, 0.0));
-        let n = s.local_normal_at(Tuple::new_point(
+        let n = s.shape.local_normal_at(s.clone(),Tuple::new_point(
             0.0,
             1.7071067811865475,
             -0.7071067811865476,
@@ -164,11 +101,11 @@ mod sphere_tests {
     #[test]
     ///Computing the normal on a translated sphere
     fn sphere_normal_transformed() {
-        let mut s = Sphere::sphere();
+        let mut s = Object::new_sphere();
         let transformation = transformation::create_scaling(1.0, 0.5, 1.0)
             * transformation::create_rotation_z(PI / 5.0);
         s.set_transform(&transformation);
-        let n = s.local_normal_at(Tuple::new_point(
+        let n = s.shape.local_normal_at(s.clone(),Tuple::new_point(
             0.0,
             2.0_f64.sqrt() / 2.0,
             -2.0_f64.sqrt() / 2.0,
@@ -183,8 +120,8 @@ mod sphere_tests {
     #[test]
     ///The normal on a sphere at a point on the y axis
     fn sphere_normal_nonaxial() {
-        let s = Sphere::sphere();
-        let n = s.local_normal_at(Tuple::new_point(
+        let s = Object::new_sphere();
+        let n = s.shape.local_normal_at(s.clone(),Tuple::new_point(
             3.0_f64.sqrt() / 3.0,
             3.0_f64.sqrt() / 3.0,
             3.0_f64.sqrt() / 3.0,
@@ -203,8 +140,8 @@ mod sphere_tests {
     #[test]
     ///The normal on a sphere at a point on the y axis
     fn sphere_normalized() {
-        let s = Sphere::sphere();
-        let n = s.local_normal_at(Tuple::new_point(
+        let s = Object::new_sphere();
+        let n = s.shape.local_normal_at(s.clone(),Tuple::new_point(
             3.0_f64.sqrt() / 3.0,
             3.0_f64.sqrt() / 3.0,
             3.0_f64.sqrt() / 3.0,
@@ -216,14 +153,14 @@ mod sphere_tests {
     #[test]
     ///A sphere's default transformation
     fn sphere_default() {
-        let s = Sphere::sphere();
+        let s = Object::new_sphere();
         assert_eq!(s.transform, Matrix::new_identity_matrix(4));
     }
 
     #[test]
     ///A sphere's default transformation
     fn sphere_tranformation() {
-        let mut s = Sphere::sphere();
+        let mut s = Object::new_sphere();
         let t = transformation::create_translation(2.0, 3.0, 4.0);
         s.set_transform(&t);
 
@@ -236,7 +173,7 @@ mod sphere_tests {
         let origin = Tuple::new_point(0.0, 0.0, -5.0);
         let direction = Tuple::new_vector(0.0, 0.0, 1.0);
         let ray = Ray::new(origin, direction);
-        let mut s = Sphere::sphere();
+        let mut s = Object::new_sphere();
         s.set_transform(&transformation::create_scaling(2.0, 2.0, 2.0));
         let xs = s.intersect(ray);
 
@@ -251,7 +188,7 @@ mod sphere_tests {
         let origin = Tuple::new_point(0.0, 0.0, -5.0);
         let direction = Tuple::new_vector(0.0, 0.0, 1.0);
         let ray = Ray::new(origin, direction);
-        let mut s = Sphere::sphere();
+        let mut s = Object::new_sphere();
         s.set_transform(&transformation::create_translation(5.0, 0.0, 0.0));
         let xs = s.intersect(ray);
 
