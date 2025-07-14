@@ -36,6 +36,13 @@ impl Pattern {
         }
     }
 
+    pub fn new_plain_pattern(color: Color) -> Pattern {
+        Pattern {
+            pattern: Patterns::Plain(PlainPattern { color }),
+            ..Default::default()
+        }
+    }
+
     pub fn new_test_pattern() -> Pattern {
         Pattern {
             pattern: Patterns::Test(TestPattern {}),
@@ -325,7 +332,7 @@ mod matrix_tests {
 
         let mut m: Material = Material::default_material();
         m.pattern = Some(pattern);
-        m.ambiant = 1.0;
+        m.ambient = 1.0;
         m.diffuse = 0.0;
         m.specular = 0.0;
         let eyev = Tuple::new_vector(0.0, 0.0, -1.0);

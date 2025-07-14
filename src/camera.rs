@@ -3,8 +3,10 @@ use std::sync::{Arc, Mutex};
 use indicatif::{ParallelProgressIterator, ProgressBar, ProgressStyle};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use rayon::prelude::*;
+use serde_yaml::with;
 
 use crate::matrix::memoized_inverse;
+use crate::transformation;
 use crate::{
     canvas::Canvas,
     color::{self, Color},
@@ -29,9 +31,9 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(hsize: usize, vsize: usize, field_of_view: f64) -> Camera {
-        let half_view = (field_of_view / 2.0).tan();
-        let aspect = (hsize as f64 / vsize as f64);
+    fn calculate_ratios(mut self) -> Self {
+        let half_view = (self.field_of_view / 2.0).tan();
+        let aspect = self.hsize as f64 / self.vsize as f64;
         let half_width;
         let half_height;
 
@@ -42,17 +44,48 @@ impl Camera {
             half_width = half_view * aspect;
             half_height = half_view
         };
-        let pixel_size = (half_width * 2.0) / (hsize as f64);
+        let pixel_size = (half_width * 2.0) / (self.hsize as f64);
 
+        self.pixel_size = pixel_size;
+        self.half_height = half_height;
+        self.half_width = half_width;
+        self
+    }
+
+    pub fn default() -> Camera {
         Camera {
-            hsize,
-            vsize,
-            field_of_view,
+            hsize: 200,
+            vsize: 100,
+            field_of_view: 1.5,
             transformation: Matrix::new_identity_matrix(4),
-            half_width,
-            half_height,
-            pixel_size,
+            half_width: 0.0,
+            half_height: 0.0,
+            pixel_size: 0.0,
         }
+        .calculate_ratios()
+    }
+
+    pub fn new(hsize: usize, vsize: usize, field_of_view: f64) -> Camera {
+        Self::default()
+            .with_size(hsize, vsize)
+            .with_fov(field_of_view)
+            .calculate_ratios()
+    }
+
+    pub fn with_size(mut self, hsize: usize, vsize: usize) -> Self {
+        self.hsize = hsize;
+        self.vsize = vsize;
+        self.calculate_ratios()
+    }
+
+    pub fn with_fov(mut self, fov: f64) -> Self {
+        self.field_of_view = fov;
+        self.calculate_ratios()
+    }
+
+    pub fn with_transformation(mut self, transformation: Matrix) -> Self {
+        self.transformation = transformation;
+        self
     }
 
     pub fn set_transform(&mut self, new_transformation: &Matrix) {

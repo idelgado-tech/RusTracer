@@ -11,15 +11,18 @@ edition = "2024"
 
 [dependencies]
 minifb = "0.28"
-serde = "1.0.133"
+serde = { version = "1.0.219" , features = ["derive"] }
 indicatif =  {version = "0.17.8", features = ["rayon"]}
 rayon = "1.10.0"
 memoize = "0.5.1"
-ordered-float = "5.0.0"
+ordered-float = {version ="5.0.0" , features = ["serde"]}
+serde_yaml = "0.9.34"
+yaml-rust = "0.4.5"
 
 [dependencies.uuid]
 version = "1.1.2"
 features = [
+    "serde",
     "v4",                # Lets you generate random UUIDs
     "fast-rng",          # Use a faster (but still sufficiently random) RNG
     "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs

@@ -26,7 +26,7 @@ impl PointLight {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Material {
     pub color: Color,
-    pub ambiant: f64,
+    pub ambient: f64,
     pub diffuse: f64,
     pub specular: f64,
     pub shininess: f64,
@@ -40,7 +40,7 @@ impl Material {
     pub fn default_material() -> Material {
         Material {
             color: Color::new_color(1.0, 1.0, 1.0),
-            ambiant: 0.1,
+            ambient: 0.1,
             diffuse: 0.9,
             specular: 0.9,
             shininess: 200.0,
@@ -53,24 +53,24 @@ impl Material {
 
     pub fn new_material(
         color: Color,
-        ambiant: f64,
+        ambient: f64,
         diffuse: f64,
         specular: f64,
         shininess: f64,
         reflective: f64,
-        transparancy: f64,
+        transparency: f64,
         refractive_index: f64,
         pattern: Option<Pattern>,
     ) -> Material {
         Material {
             color,
-            ambiant,
+            ambient,
             diffuse,
             specular,
             shininess,
             pattern,
             reflective,
-            transparency: transparancy,
+            transparency,
             refractive_index,
         }
     }
@@ -90,8 +90,8 @@ impl Material {
         self
     }
 
-    pub fn set_ambiant(&mut self, ambiant: f64) -> &Material {
-        self.ambiant = ambiant;
+    pub fn set_ambient(&mut self, ambiant: f64) -> &Material {
+        self.ambient = ambiant;
         self
     }
 
@@ -102,6 +102,51 @@ impl Material {
 
     pub fn set_color(&mut self, color: Color) -> &Material {
         self.color = color;
+        self
+    }
+
+    pub fn with_ambient(mut self, ambient: f64) -> Self {
+        self.ambient = ambient;
+        self
+    }
+
+    pub fn with_color(mut self, color: Color) -> Self {
+        self.color = color;
+        self
+    }
+
+    pub fn with_diffuse(mut self, diffuse: f64) -> Self {
+        self.diffuse = diffuse;
+        self
+    }
+
+    pub fn with_specular(mut self, specular: f64) -> Self {
+        self.specular = specular;
+        self
+    }
+
+    pub fn with_shininess(mut self, shininess: f64) -> Self {
+        self.shininess = shininess;
+        self
+    }
+
+    pub fn with_reflective(mut self, reflective: f64) -> Self {
+        self.reflective = reflective;
+        self
+    }
+
+    pub fn with_transparency(mut self, transparency: f64) -> Self {
+        self.transparency = transparency;
+        self
+    }
+
+    pub fn with_refractive_index(mut self, refractive_index: f64) -> Self {
+        self.refractive_index = refractive_index;
+        self
+    }
+
+    pub fn with_pattern(mut self, pattern_option: Option<Pattern>) -> Self {
+        self.pattern = pattern_option;
         self
     }
 }
@@ -118,9 +163,9 @@ pub fn lighting(
     let color = match &material.pattern {
         Some(pattern) => pattern.color_at_object(&object, point.clone()),
         None => material.color,
-    }; 
-    let effective_color = color* light.intensity;
-    let ambiant = effective_color * material.ambiant;
+    };
+    let effective_color = color * light.intensity;
+    let ambiant = effective_color * material.ambient;
 
     if in_shadow {
         ambiant
@@ -174,7 +219,7 @@ mod matrix_tests {
         let material = Material::default_material();
 
         assert_eq!(material.color, Color::new_color(1.0, 1.0, 1.0));
-        assert_eq!(material.ambiant, 0.1);
+        assert_eq!(material.ambient, 0.1);
         assert_eq!(material.diffuse, 0.9);
         assert_eq!(material.specular, 0.9);
         assert_eq!(material.shininess, 200.0);
@@ -193,7 +238,7 @@ mod matrix_tests {
     fn sphere_material_creation() {
         let mut s = Object::new_sphere();
         let mut material = Material::default_material();
-        material.ambiant = 1.0;
+        material.ambient = 1.0;
         s.material = material.clone();
         assert_eq!(s.material, material);
     }
@@ -365,7 +410,7 @@ mod matrix_tests {
         );
 
         let shape = w.objects[1].clone();
-        shape.get_material().ambiant = 1.0;
+        shape.get_material().ambient = 1.0;
         let i = Intersection::new(1.0, &shape);
 
         let comps = prepare_computations_helper(&i, &r);

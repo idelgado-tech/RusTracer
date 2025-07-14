@@ -148,7 +148,7 @@ mod shape_tests {
         let s = Object::new_test_shape();
         let material = s.material;
         assert_eq!(material.color, Color::new_color(1.0, 1.0, 1.0));
-        assert_eq!(material.ambiant, 0.1);
+        assert_eq!(material.ambient, 0.1);
         assert_eq!(material.diffuse, 0.9);
         assert_eq!(material.specular, 0.9);
         assert_eq!(material.shininess, 200.0);
@@ -159,7 +159,7 @@ mod shape_tests {
     fn test_shape_material_creation() {
         let mut s = Object::new_test_shape();
         let mut material = Material::default_material();
-        material.ambiant = 1.0;
+        material.ambient = 1.0;
         s.material = material.clone();
         assert_eq!(s.material, material);
     }

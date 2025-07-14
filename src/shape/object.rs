@@ -10,7 +10,7 @@ use crate::{
     tuple::Tuple,
 };
 
-#[derive(Debug,Clone,PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Object {
     pub transform: Matrix,
     pub material: Material,
@@ -36,7 +36,7 @@ impl Object {
     }
 
     pub fn set_ambiant(&mut self, ambiant: f64) {
-        self.set_material(self.get_material().set_ambiant(ambiant));
+        self.set_material(self.get_material().set_ambient(ambiant));
     }
 
     pub fn set_pattern(&mut self, pattern: Pattern) {
@@ -69,5 +69,20 @@ impl Object {
 
     pub fn get_id(&self) -> Uuid {
         self.id
+    }
+
+    pub fn with_material(mut self, material: Material) -> Self {
+        self.material = material;
+        self
+    }
+
+    pub fn with_transformation(mut self, transformation: Matrix) -> Self {
+        self.transform = transformation;
+        self
+    }
+
+    pub fn with_shape(mut self, shape: Shape) -> Self {
+        self.shape = shape;
+        self
     }
 }
