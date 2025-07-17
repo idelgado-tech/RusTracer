@@ -1,6 +1,6 @@
 - add: camera
-  width: 2000
-  height: 1000
+  width: 1000
+  height: 500
   field-of-view: 1.57
   from: [0, 1.5, -5.0]
   to: [0, 1, 0]
