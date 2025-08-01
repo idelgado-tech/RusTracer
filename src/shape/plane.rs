@@ -15,6 +15,7 @@ impl Object {
             transform: Matrix::new_identity_matrix(4),
             material: Material::default_material(),
             shape: Shape::Plane(),
+            shadow: true,
         }
     }
 }
@@ -52,7 +53,7 @@ mod transformation_tests {
             Tuple::new_point(0.0, 10.0, 0.0),
             Tuple::new_vector(0.0, 0.0, 1.0),
         );
-        let xs = p.shape.local_intersect(p.clone(),r);
+        let xs = p.shape.local_intersect(p.clone(), r);
         assert!(xs.is_empty())
     }
 
@@ -64,7 +65,7 @@ mod transformation_tests {
             Tuple::new_point(0.0, 0.0, 0.0),
             Tuple::new_vector(0.0, 0.0, 1.0),
         );
-        let xs = p.shape.local_intersect(p.clone(),r);
+        let xs = p.shape.local_intersect(p.clone(), r);
         assert!(xs.is_empty())
     }
 
@@ -76,7 +77,7 @@ mod transformation_tests {
             Tuple::new_point(0.0, 1.0, 0.0),
             Tuple::new_vector(0.0, -1.0, 0.0),
         );
-        let xs = p.shape.local_intersect(p.clone(),r);
+        let xs = p.shape.local_intersect(p.clone(), r);
         assert_eq!(xs.len(), 1);
         assert_eq!(xs[0].t, 1.0);
         assert!(xs[0].object == p);
@@ -89,7 +90,7 @@ mod transformation_tests {
             Tuple::new_point(0.0, -1.0, 0.0),
             Tuple::new_vector(0.0, 1.0, 0.0),
         );
-        let xs = p.shape.local_intersect(p.clone(),r);
+        let xs = p.shape.local_intersect(p.clone(), r);
         assert_eq!(xs.len(), 1);
         assert_eq!(xs[0].t, 1.0);
         assert!(xs[0].object == p);

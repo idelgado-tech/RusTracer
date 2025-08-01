@@ -343,7 +343,7 @@ fn mk_object(defs: &Definitions, hash: &yaml::Hash, ty: &str) -> Object {
         _ => panic!("Unexpected object type: {:?}", ty),
     }
     .with_material(mk_material(defs, hash))
-    // .with_shadow(mk_bool_from_key(hash, "shadow").unwrap_or(true))
+    .with_shadow(mk_bool_from_key(hash, "shadow").unwrap_or(true))
     .with_transformation(mk_transform(defs, hash));
 
     object

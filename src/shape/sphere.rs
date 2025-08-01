@@ -18,6 +18,7 @@ impl Object {
             id: Uuid::new_v4(),
             transform: Matrix::new_identity_matrix(4),
             material: Material::default_material(),
+            shadow: true,
         }
     }
 
@@ -34,6 +35,7 @@ impl Object {
             id: Uuid::new_v4(),
             transform: Matrix::new_identity_matrix(4),
             material,
+            shadow: true,
         }
     }
 }
@@ -58,7 +60,9 @@ mod sphere_tests {
     ///The normal on a sphere at a point on the x axis
     fn sphere_normal_x() {
         let s = Object::new_sphere();
-        let n = s.shape.local_normal_at(s.clone(),Tuple::new_point(1.0, 0.0, 0.0));
+        let n = s
+            .shape
+            .local_normal_at(s.clone(), Tuple::new_point(1.0, 0.0, 0.0));
 
         assert_eq!(n, Tuple::new_vector(1.0, 0.0, 0.0));
     }
@@ -67,7 +71,9 @@ mod sphere_tests {
     ///The normal on a sphere at a point on the y axis
     fn sphere_normal_y() {
         let s = Object::new_sphere();
-        let n = s.shape.local_normal_at(s.clone(),Tuple::new_point(0.0, 1.0, 0.0));
+        let n = s
+            .shape
+            .local_normal_at(s.clone(), Tuple::new_point(0.0, 1.0, 0.0));
 
         assert_eq!(n, Tuple::new_vector(0.0, 1.0, 0.0));
     }
@@ -76,7 +82,9 @@ mod sphere_tests {
     ///The normal on a sphere at a point on the z axis
     fn sphere_normal_z() {
         let s = Object::new_sphere();
-        let n = s.shape.local_normal_at(s.clone(),Tuple::new_point(0.0, 0.0, 1.0));
+        let n = s
+            .shape
+            .local_normal_at(s.clone(), Tuple::new_point(0.0, 0.0, 1.0));
 
         assert_eq!(n, Tuple::new_vector(0.0, 0.0, 1.0));
     }
@@ -86,11 +94,10 @@ mod sphere_tests {
     fn sphere_normal_translation() {
         let mut s = Object::new_sphere();
         s.set_transform(&transformation::create_translation(0.0, 1.0, 0.0));
-        let n = s.shape.local_normal_at(s.clone(),Tuple::new_point(
-            0.0,
-            1.7071067811865475,
-            -0.7071067811865476,
-        ));
+        let n = s.shape.local_normal_at(
+            s.clone(),
+            Tuple::new_point(0.0, 1.7071067811865475, -0.7071067811865476),
+        );
 
         assert_eq!(
             n,
@@ -105,11 +112,10 @@ mod sphere_tests {
         let transformation = transformation::create_scaling(1.0, 0.5, 1.0)
             * transformation::create_rotation_z(PI / 5.0);
         s.set_transform(&transformation);
-        let n = s.shape.local_normal_at(s.clone(),Tuple::new_point(
-            0.0,
-            2.0_f64.sqrt() / 2.0,
-            -2.0_f64.sqrt() / 2.0,
-        ));
+        let n = s.shape.local_normal_at(
+            s.clone(),
+            Tuple::new_point(0.0, 2.0_f64.sqrt() / 2.0, -2.0_f64.sqrt() / 2.0),
+        );
 
         assert_eq!(
             n,
@@ -121,11 +127,14 @@ mod sphere_tests {
     ///The normal on a sphere at a point on the y axis
     fn sphere_normal_nonaxial() {
         let s = Object::new_sphere();
-        let n = s.shape.local_normal_at(s.clone(),Tuple::new_point(
-            3.0_f64.sqrt() / 3.0,
-            3.0_f64.sqrt() / 3.0,
-            3.0_f64.sqrt() / 3.0,
-        ));
+        let n = s.shape.local_normal_at(
+            s.clone(),
+            Tuple::new_point(
+                3.0_f64.sqrt() / 3.0,
+                3.0_f64.sqrt() / 3.0,
+                3.0_f64.sqrt() / 3.0,
+            ),
+        );
 
         assert_eq!(
             n,
@@ -141,11 +150,14 @@ mod sphere_tests {
     ///The normal on a sphere at a point on the y axis
     fn sphere_normalized() {
         let s = Object::new_sphere();
-        let n = s.shape.local_normal_at(s.clone(),Tuple::new_point(
-            3.0_f64.sqrt() / 3.0,
-            3.0_f64.sqrt() / 3.0,
-            3.0_f64.sqrt() / 3.0,
-        ));
+        let n = s.shape.local_normal_at(
+            s.clone(),
+            Tuple::new_point(
+                3.0_f64.sqrt() / 3.0,
+                3.0_f64.sqrt() / 3.0,
+                3.0_f64.sqrt() / 3.0,
+            ),
+        );
 
         assert_eq!(n.clone(), n.normalize());
     }

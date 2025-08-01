@@ -40,6 +40,7 @@ impl Object {
                     },
                 },
             },
+            shadow: true,
         }
     }
 }

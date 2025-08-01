@@ -40,7 +40,7 @@ use crate::{
 
 fn main() {
 
-    let path = Path::new("/home/vanvan/RusTracer/scenes/ch11.yml");
+    let path = Path::new("/home/vanvan/RusTracer/scenes/ch11_refraction.yml");
     let (objects, ligths, camera) = parse(path);
 
     println!("Parsed value in {:?}", path);

@@ -2,7 +2,7 @@ use memoize::memoize;
 use ordered_float::OrderedFloat;
 
 use crate::error;
-use crate::error::ErrorKind;
+use crate::error::ErrorEnum;
 use crate::tuple::*;
 use crate::utils::*;
 
@@ -186,9 +186,9 @@ impl Matrix {
         self.determinant() != 0.0
     }
 
-    pub fn inverse(&self) -> Result<Matrix, error::TracerError> {
+    pub fn inverse(&self) -> Result<Matrix, error::RayTracerError> {
         if !self.is_invertible() {
-            Err(error::TracerError::new_simple(ErrorKind::NotInversible))
+            Err(error::RayTracerError::new_simple(ErrorEnum::NotInversible))
         } else {
             let mut m2 = Matrix::new_matrix(self.size);
 
@@ -204,7 +204,7 @@ impl Matrix {
 }
 
 #[memoize]
-pub fn memoized_inverse(matrix: Matrix) -> Result<Matrix, error::TracerError> {
+pub fn memoized_inverse(matrix: Matrix) -> Result<Matrix, error::RayTracerError> {
     matrix.inverse()
 }
 

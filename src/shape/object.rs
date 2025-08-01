@@ -16,6 +16,7 @@ pub struct Object {
     pub material: Material,
     pub shape: Shape,
     pub id: Uuid,
+    pub shadow: bool,
 }
 
 impl Object {
@@ -71,6 +72,10 @@ impl Object {
         self.id
     }
 
+    pub fn has_shadow (&self)-> bool{
+        self.shadow
+    }
+
     pub fn with_material(mut self, material: Material) -> Self {
         self.material = material;
         self
@@ -83,6 +88,11 @@ impl Object {
 
     pub fn with_shape(mut self, shape: Shape) -> Self {
         self.shape = shape;
+        self
+    }
+
+    pub fn with_shadow(mut self, shadow: bool) -> Self {
+        self.shadow = shadow;
         self
     }
 }

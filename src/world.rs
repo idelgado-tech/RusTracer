@@ -62,8 +62,10 @@ impl World {
         let r = Ray::new(point.clone(), direction);
         let intersections = self.intersect_world(&r);
 
-        let h = hit_intersections(intersections);
-        h.is_some() && h.unwrap().t < distance
+        if let Some(h) = hit_intersections(intersections) {
+            return h.object.has_shadow() && h.t < distance;
+        }
+        false
     }
 
     pub fn shade_hit(&self, comps: &Computation, remaining_calculations: usize) -> Color {
