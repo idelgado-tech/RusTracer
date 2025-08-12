@@ -3,12 +3,6 @@ name = "rustracer"
 version = "0.5.0"
 edition = "2024"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-# on ubuntu linux we may need to point the path of xkbcommon.pc to pkgconfig
-# $ PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig cargo build 
-# TODO do a build.rs file
-
-
 [dependencies]
 minifb = "0.28"
 serde = { version = "1.0.219" , features = ["derive"] }
@@ -27,6 +21,13 @@ features = [
     "fast-rng",          # Use a faster (but still sufficiently random) RNG
     "macro-diagnostics", # Enable better diagnostics for compile-time UUIDs
 ]
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[[bench]]
+name = "benchmark"
+harness = false
 
 [profile.release]
 debug = false

@@ -23,9 +23,6 @@ impl Object {
 #[cfg(test)]
 mod transformation_tests {
     use super::*;
-    use crate::Color;
-    use crate::transformation;
-    use std::f64::consts::PI;
 
     #[test]
     // Scenario: The normal of a plane is constant everywhere

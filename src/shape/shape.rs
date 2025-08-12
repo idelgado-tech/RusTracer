@@ -121,7 +121,6 @@ impl Shape {
 #[cfg(test)]
 mod shape_tests {
     use super::*;
-    use crate::Color;
     use crate::transformation;
     use std::f64::consts::PI;
 

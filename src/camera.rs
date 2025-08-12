@@ -129,6 +129,8 @@ impl Camera {
         image
     }
 
+    // factoriser les fonctions
+
     pub fn render_with_update_bar(&self, world: World) -> Canvas {
         let mut image = Canvas::new_canvas(self.hsize, self.vsize);
         println!("Starting render");
@@ -154,7 +156,6 @@ impl Camera {
         let mut image2 = Canvas::new_canvas(self.hsize, self.vsize);
 
         println!("Starting render");
-        let pixels_num = self.vsize * self.hsize;
 
         let bar_style =
             ProgressStyle::with_template("{bar:120} [{percent_precise}%] [T : {elapsed:}]")
@@ -175,6 +176,27 @@ impl Camera {
             });
 
         println!("Done rendering");
+        image2
+    }
+
+
+    pub fn render_par_headless(&self, world: World) -> Canvas {
+        const BAND_SIZE: usize = 10;
+        let mut image2 = Canvas::new_canvas(self.hsize, self.vsize);
+
+        image2
+            .pixels()
+            .par_chunks_mut(self.hsize * BAND_SIZE)
+            .enumerate()
+            .for_each(|(i, band)| {
+                for row in 0..BAND_SIZE {
+                    for col in 0..self.hsize {
+                        band[row * self.hsize + col] =
+                            self.color_at(&world, col, row + i * BAND_SIZE);
+                    }
+                }
+            });
+
         image2
     }
 }
